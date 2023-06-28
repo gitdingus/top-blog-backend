@@ -61,7 +61,7 @@ passport.deserializeUser(
   }
 )
 
-app.use(cors( { origin: process.env.CORS_ORIGIN, credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
