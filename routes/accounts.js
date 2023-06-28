@@ -10,5 +10,6 @@ accountsRouter.post('/api/logout', accountsController.api_post_logout);
 accountsRouter.get('/api/profile/:username', accountsController.api_get_user_profile);
 
 accountsRouter.post('/api/:id/update', accountsController.api_post_update_profile);
+accountsRouter.post('/api/:id/change-password', accountsController.api_post_change_password);
 
 module.exports = accountsRouter;

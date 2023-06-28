@@ -245,3 +245,43 @@ exports.api_post_update_profile = [
       });
   }),
 ];
+
+exports.api_post_change_password = [
+  isLoggedInUser,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('password', 'Password is not strong enough')
+    .isStrongPassword(passwordConfig),
+  body('confirm_password', 'Passwords do not match')
+    .custom((value, { req }) => {
+      return value === req.body.password;
+    }),
+  asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.params.id, 'salt hash').exec();
+    const errors = validationResult(req).array();
+
+    if (user === null) {
+      return next(createError(404, 'User not found'));
+    }
+
+    if (!req.body.old_password || !validPassword(req.body.old_password, user.salt, user.hash)) {
+      errors.push( { msg: 'Invalid password' });
+    }
+
+    if (errors.length > 0) {
+      res.status(400)
+        .json({ errors: errors });
+      return;
+    }
+
+    const { salt, hash } = generateSaltHash(req.body.password);
+
+    user.salt = salt;
+    user.hash = hash;
+
+    await user.save();
+
+    res.status(200)
+      .json({ msg: 'Successful' });
+  }),
+]
