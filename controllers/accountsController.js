@@ -137,7 +137,7 @@ exports.api_get_user_profile = [
         user[field] = undefined;
       });
     }
-    const user = await User.findOne({ username: req.params.username }, { salt: 0, hash: 0 }).exec();
+    const user = await User.findOne({ username: req.params.username }, { _id: 0, salt: 0, hash: 0 }).exec();
     
     if (user === null) {
       return next(createError('404', 'User not found'));
@@ -148,7 +148,7 @@ exports.api_get_user_profile = [
         their data if account is public
         If request is not authenticated automatically restrict user information
     */ 
-   
+
     if (req.isAuthenticated()) {
       if (!(req.user.accountType === 'admin' 
         || req.user.username === req.params.username)) {
