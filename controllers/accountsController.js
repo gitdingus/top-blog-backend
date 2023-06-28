@@ -1,11 +1,12 @@
 const express = require('express');
+const passport = require('passport');
 const createError = require('http-errors');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/user.js');
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
 
-exports.post_create_account = [
+exports.api_post_create_account = [
   express.json(),
   express.urlencoded({ extended: false }),
   body('username', 'Must supply a username')
@@ -106,6 +107,16 @@ exports.post_create_account = [
   }),
 ];
 
+exports.api_post_login = [
+  express.json(),
+  express.urlencoded({ extended: false }),
+  passport.authenticate('local'),
+  (req, res, next) => {
+    res
+      .status(200)
+      .json({ msg: 'Successful' });
+  }
+];
 
 
 

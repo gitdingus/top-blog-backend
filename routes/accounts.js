@@ -3,6 +3,7 @@ const accountsController = require('../controllers/accountsController.js');
 
 const accountsRouter = express.Router();
 
-accountsRouter.post('/create-account', accountsController.post_create_account);
+accountsRouter.post('/api/create-account', accountsController.api_post_create_account);
+accountsRouter.post('/api/login', accountsController.api_post_login);
 
 module.exports = accountsRouter;
