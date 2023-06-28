@@ -87,15 +87,6 @@ if (process.env.NODE_ENV = 'development') {
 
 app.use(express.static('/public'));
 
-app.get('/dummy', (req, res, next) => {
-  res.send('Whoa dummy');
-});
-
-app.get('/dummy-json', (req, res, next) => {
-  res.json({ msg: 'Whoa dummy'});
-});
-
-
 app.use('/', accountsRouter);
 
 app.use((req, res, next) => {
