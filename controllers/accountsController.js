@@ -6,6 +6,18 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/user.js');
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
 
+const isLoggedInUser = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    if (req.user._id.toString() !== req.params.id) {
+      return next(createError(403, 'Forbidden'));
+    }
+  } else {
+    return next(createError(401, 'Unauthorized'));
+  }
+
+  next();
+}
+
 exports.api_post_create_account = [
   express.json(),
   express.urlencoded({ extended: false }),
@@ -163,5 +175,73 @@ exports.api_get_user_profile = [
     res
       .status(200)
       .json({ user: user.toObject() });
+  }),
+];
+
+exports.api_post_update_profile = [
+  isLoggedInUser,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('first_name', 'First name is a required field')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('last_name', 'Last name is a required field')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('email', 'Must provide a valid email address')
+    .trim()
+    .isEmail()
+    .escape()
+    .custom(async (value, { req }) => {
+      const email = value.toLowerCase();
+      const user = await User.findOne({ email });
+
+      if (user === null) {
+        return true;
+      }
+
+      // Make sure a different user is not already using the email address
+      if (user._id !== req.user._id) {
+        throw new Error('Account with this email already exists');
+      }
+
+      return true;
+    }),
+  asyncHandler(async (req,res,next) => {
+    const errors = validationResult(req);
+    const user = User.findById(req.params.id).exec();
+    const userInfo = {
+      firstName: req.body.first_name,
+      lastName: req.body.last_name,
+      email: req.body.email,
+    };
+
+    if (user === null) {
+      res.status(404)
+        .json({
+          msg: 'User not found',
+        });
+    }
+    if (!errors.isEmpty()) {
+      res
+        .status(400)
+        .json({ 
+          errors: errors.array(),
+          userInfo, 
+        });
+
+      return;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, userInfo, { returnDocument: 'after' });
+
+    res
+      .status(200)
+      .json({ 
+        msg: 'Successful', 
+        user: updatedUser,
+      });
   }),
 ];

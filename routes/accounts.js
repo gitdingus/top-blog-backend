@@ -9,4 +9,6 @@ accountsRouter.post('/api/logout', accountsController.api_post_logout);
 
 accountsRouter.get('/api/profile/:username', accountsController.api_get_user_profile);
 
+accountsRouter.post('/api/:id/update', accountsController.api_post_update_profile);
+
 module.exports = accountsRouter;
