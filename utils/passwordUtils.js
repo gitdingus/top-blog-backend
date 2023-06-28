@@ -21,6 +21,10 @@ function generateSaltHash(password) {
 }
 
 function validPassword(password, salt, hash) {
+  if (!password || !salt || !hash) {
+    throw new Error('function validPassword(password, salt, hash) supplied with bad arguments');
+  }
+  
   const normalizedPwd = password.normalize();
   const passwordAttempt = crypto.pbkdf2Sync(normalizedPwd, salt, 1000, 128, 'sha512').toString('hex');
 
