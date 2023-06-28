@@ -128,5 +128,40 @@ exports.api_post_logout = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.api_get_user_profile = [
+  asyncHandler(async (req, res, next) => {
+    const restrictAccessTo = (user) => {
+      const privateFields = ['firstName', 'lastName', 'email' ];
 
+      privateFields.forEach((field) => {
+        user[field] = undefined;
+      });
+    }
+    const user = await User.findOne({ username: req.params.username }, { salt: 0, hash: 0 }).exec();
+    
+    if (user === null) {
+      return next(createError('404', 'User not found'));
+    }
 
+    /*
+        For logged in requests: Only admins and user has access to all
+        their data if account is public
+        If request is not authenticated automatically restrict user information
+    */ 
+   
+    if (req.isAuthenticated()) {
+      if (!(req.user.accountType === 'admin' 
+        || req.user.username === req.params.username)) {
+          if (!user.public) {
+            restrictAccessTo(user);
+          }
+      }
+    } else {
+      restrictAccessTo(user);
+    }
+
+    res
+      .status(200)
+      .json({ user: user.toObject() });
+  }),
+];
