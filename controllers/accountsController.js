@@ -143,13 +143,13 @@ exports.api_post_logout = asyncHandler(async (req, res, next) => {
 exports.api_get_user_profile = [
   asyncHandler(async (req, res, next) => {
     const restrictAccessTo = (user) => {
-      const privateFields = ['firstName', 'lastName', 'email' ];
+      const privateFields = [ 'firstName', 'lastName', 'email' ];
 
       privateFields.forEach((field) => {
         user[field] = undefined;
       });
     }
-    const user = await User.findOne({ username: req.params.username }, { _id: 0, salt: 0, hash: 0 }).exec();
+    const user = await User.findOne({ username: req.params.username }, { salt: 0, hash: 0 }).exec();
     
     if (user === null) {
       return next(createError('404', 'User not found'));
@@ -164,11 +164,13 @@ exports.api_get_user_profile = [
     if (req.isAuthenticated()) {
       if (!(req.user.accountType === 'admin' 
         || req.user.username === req.params.username)) {
+          user._id = undefined; // Should never be sent even if queried user is public
           if (!user.public) {
             restrictAccessTo(user);
           }
       }
     } else {
+      user._id = undefined; // Never send to unauthenticated users
       restrictAccessTo(user);
     }
 
