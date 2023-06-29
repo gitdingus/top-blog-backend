@@ -4,6 +4,9 @@ const createError = require('http-errors');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/user.js');
+const Category = require('../models/category.js');
+const Blog = require('../models/blog.js');
+
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
 
 const isLoggedInUser = (req, res, next) => {
@@ -17,6 +20,19 @@ const isLoggedInUser = (req, res, next) => {
 
   next();
 }
+
+const isBloggerInGoodStanding = asyncHandler(async(req, res, next) => {
+  if (req.isAuthenticated()) {
+    if (req.user.accountType !== 'Blogger' || req.user.status !== 'Good') {
+      return next(createError(403, 'Forbidden'));
+    }
+
+  } else {
+    return next(createError(401, 'Unauthorized'));
+  }
+
+  next();
+});
 
 exports.api_post_create_account = [
   express.json(),
@@ -156,7 +172,6 @@ exports.api_get_user_profile = [
     }
 
     const userObj = user.toObject();
-    console.log(userObj);
     /*
         For logged in requests: Only admins and user has access to all
         their data if account is public
@@ -312,14 +327,67 @@ exports.api_post_update_settings = [
   }),
 ];
 
-exports.api_post_create_blog = asyncHandler(async(req, res, next) => {
-  res.status(200).json({ msg: 'POST CREATE BLOG: Not implemented' });
-});
+exports.api_post_create_blog = [
+  isLoggedInUser,
+  isBloggerInGoodStanding,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('name', 'Blog name must be between 1 and 50 characters')
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .escape(),
+  body('description', 'Blog description must be between 1 and 500 characters')
+    .trim()
+    .isLength({ min: 1, max: 500 })
+    .escape(),
+  body('category', 'Invalid Category Id')
+    .isMongoId()
+    .custom(async (val) => {
+      const category = await Category.findById(val);
+
+      if (category === null) {
+        throw new Error('Category not found');
+      }
+
+      return true;
+    })
+    .withMessage('Category not found'),
+  // created gets set before making call to save document
+  asyncHandler(async(req, res, next) => {
+    const errors = validationResult(req);
+    const blog = new Blog({
+      name: req.body.name,
+      description: req.body.description,
+      category: req.body.category,
+    });
+
+    if (!errors.isEmpty()) {
+      res.status(400)
+        .json({
+          errors: errors.array(),
+          blog,
+        });
+
+      return;
+    }
+
+    blog.owner = req.params.userId,
+    blog.created = new Date();
+
+    const newBlog = await blog.save();
+
+    res.status(200)
+      .json({ 
+        msg: 'Successful', 
+        blog: newBlog,
+      });
+  }),
+];
 
 exports.api_post_create_blogpost = asyncHandler(async(req, res, next) => {
   res.status(200).json({ msg: 'POST CREATE BLOGPOST: Not implemented' });
 });
 
-exports.api_post_list_blogs = = asyncHandler(async(req, res, next) => {
+exports.api_post_list_blogs = asyncHandler(async(req, res, next) => {
   res.status(200).json({ msg: 'GET LIST BLOGS: Not implemented' });
 });
