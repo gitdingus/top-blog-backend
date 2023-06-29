@@ -287,3 +287,25 @@ exports.api_post_change_password = [
       .json({ msg: 'Successful' });
   }),
 ]
+
+exports.api_post_update_settings = [
+  isLoggedInUser,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('public', 'Public must be a boolean value')
+    .isBoolean(),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    const user = await User.findById(req.params.id).exec();
+
+    if (!errors.isEmpty()) {
+      res.status(400)
+        .json({ errors: errors.array() });
+    }
+    user.public = req.body.public;
+    await user.save();
+
+    res.status(200)
+      .json({ msg: 'Successful' });
+  }),
+];
