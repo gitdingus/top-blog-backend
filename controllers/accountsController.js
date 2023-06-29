@@ -388,6 +388,12 @@ exports.api_post_create_blogpost = asyncHandler(async(req, res, next) => {
   res.status(200).json({ msg: 'POST CREATE BLOGPOST: Not implemented' });
 });
 
-exports.api_post_list_blogs = asyncHandler(async(req, res, next) => {
-  res.status(200).json({ msg: 'GET LIST BLOGS: Not implemented' });
-});
+exports.api_post_list_blogs = [
+  isLoggedInUser,
+  asyncHandler(async(req, res, next) => {
+    const blogs = await Blog.find({ owner: req.params.userId }).exec();
+
+    res.status(200)
+      .json({ blogs });
+  }),
+];
