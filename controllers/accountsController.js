@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/user.js');
 const Category = require('../models/category.js');
 const Blog = require('../models/blog.js');
+const BlogPost = require('../models/blogPost.js');
 
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
 
@@ -384,9 +385,54 @@ exports.api_post_create_blog = [
   }),
 ];
 
-exports.api_post_create_blogpost = asyncHandler(async(req, res, next) => {
-  res.status(200).json({ msg: 'POST CREATE BLOGPOST: Not implemented' });
-});
+/* Has params userId and blogId */
+exports.api_post_create_blogpost = [
+  isLoggedInUser,
+  isBloggerInGoodStanding,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('title', 'Title must be between 1 and 50 characters')
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .escape(),
+  body('content', 'Blog post must contain content')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  asyncHandler(async(req, res, next) => {
+    const errors = validationResult(req).array();
+    const blog = await Blog.findById(req.params.blogId);
+
+    const blogPost = new BlogPost({
+      title: req.body.title,
+      content: req.body.content,
+    });
+
+    if (blog === null) {
+      errors.push({ msg: 'Blog does not exist' });
+    }
+
+    if (errors.length > 0) { 
+      res.status(400)
+        .json({
+          errors,
+          blogPost,
+        });
+      return;
+    }
+
+    blogPost.blog = req.params.blogId;
+    blogPost.author = req.params.userId;
+    blogPost.created = new Date();
+
+    const newPost = await blogPost.save();
+
+    res.status(200).json({ 
+      msg: 'Successful',
+      newPost,
+    });
+  }),
+];
 
 exports.api_post_list_blogs = [
   isLoggedInUser,
