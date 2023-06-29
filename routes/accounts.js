@@ -16,4 +16,9 @@ accountsRouter.post('/api/users/:id/update', accountsController.api_post_update_
 accountsRouter.post('/api/users/:id/change-password', accountsController.api_post_change_password);
 accountsRouter.post('/api/users/:id/update-settings', accountsController.api_post_update_settings);
 
+// Creating blogs and blog posts
+accountsRouter.post('/api/users/:userId/blogs/create-blog', accountsController.api_post_create_blog);
+accountsRouter.post('/api/users/:userId/blogs/:blogId/create-post', accountsController.api_post_create_blogpost);
+accountsRouter.get('/api/users/:userId/blogs', accountsController.api_post_list_blogs);
+
 module.exports = accountsRouter;
