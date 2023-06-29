@@ -7,10 +7,11 @@ accountsRouter.post('/api/create-account', accountsController.api_post_create_ac
 accountsRouter.post('/api/login', accountsController.api_post_login);
 accountsRouter.post('/api/logout', accountsController.api_post_logout);
 
-accountsRouter.get('/api/profile/:username', accountsController.api_get_user_profile);
+accountsRouter.get('/api/users/:username', accountsController.api_get_user_profile);
 
-accountsRouter.post('/api/:id/update', accountsController.api_post_update_profile);
-accountsRouter.post('/api/:id/change-password', accountsController.api_post_change_password);
+// Update account information
+accountsRouter.post('/api/users/:id/update', accountsController.api_post_update_profile);
+accountsRouter.post('/api/users/:id/change-password', accountsController.api_post_change_password);
 accountsRouter.post('/api/users/:id/update-settings', accountsController.api_post_update_settings);
 
 module.exports = accountsRouter;
