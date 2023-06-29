@@ -150,11 +150,13 @@ exports.api_get_user_profile = [
       });
     }
     const user = await User.findOne({ username: req.params.username }, { salt: 0, hash: 0 }).exec();
-    
+
     if (user === null) {
       return next(createError('404', 'User not found'));
     }
 
+    const userObj = user.toObject();
+    console.log(userObj);
     /*
         For logged in requests: Only admins and user has access to all
         their data if account is public
@@ -162,21 +164,21 @@ exports.api_get_user_profile = [
     */ 
 
     if (req.isAuthenticated()) {
-      if (!(req.user.accountType === 'admin' 
+      if (!(req.user.accountType === 'Admin' 
         || req.user.username === req.params.username)) {
-          user._id = undefined; // Should never be sent even if queried user is public
-          if (!user.public) {
-            restrictAccessTo(user);
+          userObj._id = undefined; // Should never be sent even if queried user is public
+          if (!userObj.public) {
+            restrictAccessTo(userObj);
           }
       }
     } else {
-      user._id = undefined; // Never send to unauthenticated users
-      restrictAccessTo(user);
+      userObj._id = undefined; // Never send to unauthenticated users
+      restrictAccessTo(userObj);
     }
 
     res
       .status(200)
-      .json({ user: user.toObject() });
+      .json({ user: userObj });
   }),
 ];
 
