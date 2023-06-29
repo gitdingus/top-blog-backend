@@ -8,7 +8,7 @@ const { generateSaltHash, validPassword, passwordConfig } = require('../utils/pa
 
 const isLoggedInUser = (req, res, next) => {
   if (req.isAuthenticated()) {
-    if (req.user._id.toString() !== req.params.id) {
+    if (req.user._id.toString() !== req.params.userId) {
       return next(createError(403, 'Forbidden'));
     }
   } else {
@@ -215,7 +215,7 @@ exports.api_post_update_profile = [
     }),
   asyncHandler(async (req,res,next) => {
     const errors = validationResult(req);
-    const user = User.findById(req.params.id).exec();
+    const user = User.findById(req.params.userId).exec();
     const userInfo = {
       firstName: req.body.first_name,
       lastName: req.body.last_name,
@@ -239,7 +239,7 @@ exports.api_post_update_profile = [
       return;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, userInfo, { returnDocument: 'after' });
+    const updatedUser = await User.findByIdAndUpdate(req.params.userId, userInfo, { returnDocument: 'after' });
 
     res
       .status(200)
@@ -261,7 +261,7 @@ exports.api_post_change_password = [
       return value === req.body.password;
     }),
   asyncHandler(async (req, res, next) => {
-    const user = await User.findById(req.params.id, 'salt hash').exec();
+    const user = await User.findById(req.params.userId, 'salt hash').exec();
     const errors = validationResult(req).array();
 
     if (user === null) {
@@ -298,7 +298,7 @@ exports.api_post_update_settings = [
     .isBoolean(),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    const user = await User.findById(req.params.id).exec();
+    const user = await User.findById(req.params.userId).exec();
 
     if (!errors.isEmpty()) {
       res.status(400)
