@@ -309,3 +309,15 @@ exports.api_post_update_settings = [
       .json({ msg: 'Successful' });
   }),
 ];
+
+exports.api_post_create_blog = asyncHandler(async(req, res, next) => {
+  res.status(200).json({ msg: 'POST CREATE BLOG: Not implemented' });
+});
+
+exports.api_post_create_blogpost = asyncHandler(async(req, res, next) => {
+  res.status(200).json({ msg: 'POST CREATE BLOGPOST: Not implemented' });
+});
+
+exports.api_post_list_blogs = = asyncHandler(async(req, res, next) => {
+  res.status(200).json({ msg: 'GET LIST BLOGS: Not implemented' });
+});
