@@ -19,6 +19,11 @@ accountsRouter.post('/api/users/:userId/update-settings', accountsController.api
 // Creating blogs and blog posts
 accountsRouter.post('/api/users/:userId/blogs/create-blog', accountsController.api_post_create_blog);
 accountsRouter.post('/api/users/:userId/blogs/:blogId/create-post', accountsController.api_post_create_blogpost);
-accountsRouter.get('/api/users/:userId/blogs', accountsController.api_post_list_blogs);
+
+// Viewing a users blogs and blogposts
+// Routes for a user to view their own information
+accountsRouter.get('/api/users/:userId/blogs', accountsController.api_get_list_blogs);
+accountsRouter.get('/api/users/:userId/blogs/:blogId', accountsController.api_get_blogs_posts)
+accountsRouter.get('/api/users/:userId/blog-posts', accountsController.api_get_blog_posts);
 
 module.exports = accountsRouter;

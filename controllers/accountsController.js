@@ -434,7 +434,7 @@ exports.api_post_create_blogpost = [
   }),
 ];
 
-exports.api_post_list_blogs = [
+exports.api_get_list_blogs = [
   isLoggedInUser,
   asyncHandler(async(req, res, next) => {
     const blogs = await Blog.find({ owner: req.params.userId }).exec();
@@ -443,3 +443,23 @@ exports.api_post_list_blogs = [
       .json({ blogs });
   }),
 ];
+
+exports.api_get_blogs_posts = [
+  isLoggedInUser,
+  asyncHandler(async(req, res, next) => {
+    const posts = await BlogPost.find({ blog: req.params.blogId }).exec();
+
+    res.status(200)
+      .json({ posts });
+  }),
+];
+
+exports.api_get_blog_posts = [
+  isLoggedInUser,
+  asyncHandler(async(req, res, next) => {
+    const posts = await BlogPost.find({ }).exec();
+
+    res.status(200)
+      .json({ posts });
+  }),
+]; 
