@@ -178,7 +178,7 @@ exports.api_get_user_profile = [
         user[field] = undefined;
       });
     }
-    const user = await User.findOne({ username: req.params.username }, { salt: 0, hash: 0 }).exec();
+    const user = await User.findOne({ username: req.params.username }, { salt: 0, hash: 0, __v: 0 }).exec();
 
     if (user === null) {
       return next(createError('404', 'User not found'));
