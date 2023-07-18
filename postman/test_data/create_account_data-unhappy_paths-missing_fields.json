@@ -1,0 +1,72 @@
+[
+  {
+    "first_name": null,
+    "last_name": "{{$randomLastName}}",
+    "username": "{{$randomUserName}}",
+    "email": "{{$randomEmail}}",
+    "account_type": "Blogger",
+    "password": "test123",
+    "confirm_password": "test123",
+    "error_message": "First name is a required field"
+  },
+  {
+    "first_name": "{{$randomfirstName}}",
+    "last_name": null,
+    "username": "{{$randomUserName}}",
+    "email": "{{$randomEmail}}",
+    "account_type": "Blogger",
+    "password": "test123",
+    "confirm_password": "test123",
+    "error_message": "Last name is a required field"
+  },
+  {
+    "first_name": "{{$randomfirstName}}",
+    "last_name": "{{$randomLastName}}",
+    "username": null,
+    "email": "{{$randomEmail}}",
+    "account_type": "Blogger",
+    "password": "test123",
+    "confirm_password": "test123",
+    "error_message": "Must supply a username"
+  },
+  {
+    "first_name": "{{$randomFirstName}}",
+    "last_name": "{{$randomLastName}}",
+    "username": "{{$randomUserName}}",
+    "email": null,
+    "account_type": "Blogger",
+    "password": "test123",
+    "confirm_password": "test123",
+    "error_message": "Must provide a valid email address"
+  },
+  {
+    "first_name": "{{$randomFirstName}}",
+    "last_name": "{{$randomLastName}}",
+    "username": "{{$randomUserName}}",
+    "email": "{{$randomEmail}}",
+    "account_type": null,
+    "password": "test123",
+    "confirm_password": "test123",
+    "error_message": "Unrecognized account type"
+  },
+  {
+    "first_name": "{{$randomFirstName}}",
+    "last_name": "{{$randomLastName}}",
+    "username": "{{$randomUserName}}",
+    "email": "{{$randomEmail}}",
+    "account_type": "Blogger",
+    "password": null,
+    "confirm_password": "test123",
+    "error_message": "Password is required"
+  },
+  {
+    "first_name": "{{$randomFirstName}}",
+    "last_name": "{{$randomLastName}}",
+    "username": "{{$randomUserName}}",
+    "email": "{{$randomEmail}}",
+    "account_type": "Blogger",
+    "password": "test123",
+    "confirm_password": null,
+    "error_message": "Must confirm password"
+  }
+]
