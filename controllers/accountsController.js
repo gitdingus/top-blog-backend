@@ -40,10 +40,11 @@ exports.api_post_create_account = [
   express.urlencoded({ extended: false }),
   body('username', 'Must supply a username')
     .trim()
+    .toLowerCase()
     .isLength({ min: 1 })
+    .bail()
     .escape()
-    .custom(async (value) => {
-      const username = value.toLowerCase();
+    .custom(async (username) => {
       const user = await User.findOne({ username });
 
       if (user !== null) {
@@ -63,6 +64,7 @@ exports.api_post_create_account = [
   body('email', 'Must provide a valid email address')
     .trim()
     .isEmail()
+    .bail()
     .escape()
     .custom(async (value) => {
       const email = value.toLowerCase();
@@ -80,12 +82,22 @@ exports.api_post_create_account = [
 
       return validAccountTypesAtCreation.includes(value);
     }),
-  body('password', 'Password is not strong enough')
-    .isStrongPassword(passwordConfig),
-  body('confirm_password', 'Passwords do not match')
+  body('password')
+    .isLength({ min: 1 })
+    .withMessage('Password is required')
+    .bail()
+    .isStrongPassword(passwordConfig)
+    .withMessage('Password is not strong enough')
+    .bail(),
+  body('confirm_password')
+    .if((value, { req }) => req.body.password)
+    .isLength({ min: 1 })
+    .withMessage('Must confirm password')
+    .bail()
     .custom((value, { req }) => {
       return value === req.body.password;
-    }),
+    })
+    .withMessage('Passwords do not match'),
   // fields status and public assigned during creation
   asyncHandler(async (req, res, next) => {
     const newAccount = new User({
