@@ -214,20 +214,27 @@ exports.api_post_update_profile = [
   isLoggedInUser,
   express.json(),
   express.urlencoded({ extended: false }),
-  body('first_name', 'First name is a required field')
+  body('first_name')
+    .if((value, { req }) => req.body.first_name !== undefined)
     .trim()
     .isLength({ min: 1 })
+    .withMessage('First name must be at least 1 character')
     .escape(),
-  body('last_name', 'Last name is a required field')
+  body('last_name')
+    .if((value, { req }) => req.body.last_name !== undefined)
     .trim()
     .isLength({ min: 1 })
+    .withMessage('Last name must be at least 1 character')
     .escape(),
-  body('email', 'Must provide a valid email address')
+  body('email')
+    .if((value, { req }) => req.body.email !== undefined)
     .trim()
+    .toLowerCase()
     .isEmail()
+    .withMessage('Please input a valid email address')
+    .bail()
     .escape()
-    .custom(async (value, { req }) => {
-      const email = value.toLowerCase();
+    .custom(async (email, { req }) => {
       const user = await User.findOne({ email });
 
       if (user === null) {
@@ -244,11 +251,19 @@ exports.api_post_update_profile = [
   asyncHandler(async (req,res,next) => {
     const errors = validationResult(req);
     const user = User.findById(req.params.userId).exec();
-    const userInfo = {
-      firstName: req.body.first_name,
-      lastName: req.body.last_name,
-      email: req.body.email,
-    };
+    const updatedInfo = {};
+
+    if (req.body.first_name) {
+      updatedInfo.firstName = req.body.first_name;
+    }
+
+    if (req.body.last_name) {
+      updatedInfo.lastName = req.body.last_name;
+    }
+
+    if (req.body.email) {
+      updatedInfo.email = req.body.email;
+    }
 
     if (user === null) {
       res.status(404)
@@ -256,18 +271,26 @@ exports.api_post_update_profile = [
           msg: 'User not found',
         });
     }
+
     if (!errors.isEmpty()) {
       res
         .status(400)
         .json({ 
           errors: errors.array(),
-          userInfo, 
+          userInfo: updatedInfo, 
         });
 
       return;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(req.params.userId, userInfo, { returnDocument: 'after' });
+    const updatedUser = await User.findByIdAndUpdate(req.params.userId, updatedInfo, { returnDocument: 'after' });
+
+    //DO NOT SEND SALT OR HASH TO CLIENT
+    updatedUser.salt = undefined;
+    updatedUser.hash = undefined;
+
+    // Remove this for easier testing
+    updatedUser.__v = undefined; 
 
     res
       .status(200)
