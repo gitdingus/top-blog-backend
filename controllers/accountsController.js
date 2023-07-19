@@ -398,8 +398,9 @@ exports.api_post_create_blog = [
     .trim()
     .isLength({ min: 1, max: 500 })
     .escape(),
-  body('category', 'Invalid Category Id')
-    .isMongoId()
+  body('category')
+    .notEmpty().withMessage('Must supply category id').bail()
+    .isMongoId().withMessage('Invalid mongo id').bail()
     .custom(async (val) => {
       const category = await Category.findById(val);
 
@@ -408,8 +409,7 @@ exports.api_post_create_blog = [
       }
 
       return true;
-    })
-    .withMessage('Category not found'),
+    }).withMessage('Category not found'),
   // created gets set before making call to save document
   asyncHandler(async(req, res, next) => {
     const errors = validationResult(req);
