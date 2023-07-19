@@ -310,27 +310,45 @@ exports.api_post_change_password = [
   isLoggedInUser,
   express.json(),
   express.urlencoded({ extended: false }),
-  body('password', 'Password is not strong enough')
-    .isStrongPassword(passwordConfig),
-  body('confirm_password', 'Passwords do not match')
+  body('old_password')
+    .notEmpty().bail({ level: 'request' }).withMessage('Must enter old password')
+    .custom(async (oldPassword, { req }) => {
+      const user = await User.findById(req.params.userId, 'salt hash').exec();
+
+      if (!validPassword(oldPassword, user.salt, user.hash)) {
+        throw new Error('Incorrect password');
+      }
+
+      return true;
+    }).bail({ level: 'request' }),
+  body('password')
+    .isLength({ min: 1 })
+    .withMessage('Must enter new password')
+    .bail({ level: 'request' })
+    .isStrongPassword(passwordConfig)
+    .withMessage('New password is not strong enough')
+    .bail({ level: 'request' }),
+  body('confirm_password')
+    .if((value, { req }) => req.body.password)
+    .isLength({ min: 1 })
+    .withMessage('Must confirm password')
+    .bail()
     .custom((value, { req }) => {
       return value === req.body.password;
-    }),
+    })
+    .withMessage('Passwords do not match'),
   asyncHandler(async (req, res, next) => {
     const user = await User.findById(req.params.userId, 'salt hash').exec();
-    const errors = validationResult(req).array();
+    const errors = validationResult(req);
 
+    // Shouldn't happen due to isLoggedInUser?
     if (user === null) {
       return next(createError(404, 'User not found'));
     }
 
-    if (!req.body.old_password || !validPassword(req.body.old_password, user.salt, user.hash)) {
-      errors.push( { msg: 'Invalid password' });
-    }
-
-    if (errors.length > 0) {
+    if (!errors.isEmpty()) {
       res.status(400)
-        .json({ errors: errors });
+        .json({ errors: errors.array() });
       return;
     }
 
@@ -341,8 +359,7 @@ exports.api_post_change_password = [
 
     await user.save();
 
-    res.status(200)
-      .json({ msg: 'Successful' });
+    res.status(204).end();
   }),
 ]
 
