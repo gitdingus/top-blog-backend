@@ -7,7 +7,6 @@ const User = require('../models/user.js');
 const Category = require('../models/category.js');
 const Blog = require('../models/blog.js');
 const BlogPost = require('../models/blogPost.js');
-
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
 
 const isLoggedInUser = (req, res, next) => {
@@ -82,13 +81,19 @@ exports.api_post_create_account = [
 
       return validAccountTypesAtCreation.includes(value);
     }),
+  /*
+      Keep at end due to bail conditions
+
+      Don't report any errors for confirm_password field 
+      if there are any problems with the password
+  */
   body('password')
     .isLength({ min: 1 })
     .withMessage('Password is required')
-    .bail()
+    .bail({ level: 'request' })
     .isStrongPassword(passwordConfig)
     .withMessage('Password is not strong enough')
-    .bail(),
+    .bail({ level: 'request' }),
   body('confirm_password')
     .if((value, { req }) => req.body.password)
     .isLength({ min: 1 })
