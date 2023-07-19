@@ -367,8 +367,8 @@ exports.api_post_update_settings = [
   isLoggedInUser,
   express.json(),
   express.urlencoded({ extended: false }),
-  body('public', 'Public must be a boolean value')
-    .isBoolean(),
+  body('public', 'Public field must be a boolean value')
+    .isBoolean({ strict: true }),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
     const user = await User.findById(req.params.userId).exec();
@@ -376,12 +376,12 @@ exports.api_post_update_settings = [
     if (!errors.isEmpty()) {
       res.status(400)
         .json({ errors: errors.array() });
+      return;
     }
     user.public = req.body.public;
     await user.save();
 
-    res.status(200)
-      .json({ msg: 'Successful' });
+    res.status(204).end();
   }),
 ];
 
