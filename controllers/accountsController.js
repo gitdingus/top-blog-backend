@@ -2,7 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const createError = require('http-errors');
 const asyncHandler = require('express-async-handler');
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
 const User = require('../models/user.js');
 const Category = require('../models/category.js');
 const Blog = require('../models/blog.js');
@@ -424,7 +424,7 @@ exports.api_post_create_blog = [
       description: req.body.description,
       category: req.body.category,
     });
-    
+
     if (!errors.isEmpty()) {
       res.status(400)
         .json({
@@ -452,33 +452,43 @@ exports.api_post_create_blog = [
 exports.api_post_create_blogpost = [
   isLoggedInUser,
   isBloggerInGoodStanding,
+  param('blogId')
+    .isMongoId().withMessage('Malformed blog id').bail({ level: 'request' })
+    .custom(async (blogId, { req }) => {
+      const blog = await Blog.findById(blogId).exec();
+
+      if (blog === null) {
+        throw new Error('Blog does not exist');
+      }
+
+      if (!blog.owner.equals(req.user._id)) {
+        throw new Error('Blog does not belong to logged in user');
+      }
+
+      return true;
+    }).bail({ level: 'request' }),
   express.json(),
   express.urlencoded({ extended: false }),
   body('title', 'Title must be between 1 and 50 characters')
     .trim()
     .isLength({ min: 1, max: 50 })
     .escape(),
-  body('content', 'Blog post must contain content')
+  body('content', 'Content must be between 1 and 2000 characters')
     .trim()
-    .isLength({ min: 1 })
+    .isLength({ min: 1, max: 2000 })
     .escape(),
   asyncHandler(async(req, res, next) => {
-    const errors = validationResult(req).array();
-    const blog = await Blog.findById(req.params.blogId);
+    const errors = validationResult(req);
 
     const blogPost = new BlogPost({
       title: req.body.title,
       content: req.body.content,
     });
 
-    if (blog === null) {
-      errors.push({ msg: 'Blog does not exist' });
-    }
-
-    if (errors.length > 0) { 
+    if (!errors.isEmpty()) { 
       res.status(400)
         .json({
-          errors,
+          errors: errors.array(),
           blogPost,
         });
       return;
@@ -492,7 +502,7 @@ exports.api_post_create_blogpost = [
 
     res.status(200).json({ 
       msg: 'Successful',
-      newPost,
+      blogPost: newPost,
     });
   }),
 ];
