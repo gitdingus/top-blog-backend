@@ -22,7 +22,7 @@ accountsRouter.post('/api/users/:userId/blogs/:blogId/create-post', accountsCont
 
 // Viewing a users blogs and blogposts
 // Routes for a user to view their own information
-accountsRouter.get('/api/users/:userId/blogs', accountsController.api_get_list_blogs);
+accountsRouter.get('/api/users/:userId/blogs', accountsController.api_get_blogs_list);
 accountsRouter.get('/api/users/:userId/blogs/:blogId', accountsController.api_get_blogs_posts)
 accountsRouter.get('/api/users/:userId/blog-posts', accountsController.api_get_blog_posts);
 
