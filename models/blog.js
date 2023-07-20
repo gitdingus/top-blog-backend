@@ -12,6 +12,13 @@ const blogSchema = new Schema({
     required: true,
     type: String,
     trim: true,
+    maxLength: 25,
+    match: /^[a-zA-Z-_]+$/,
+  },
+  title: {
+    required: true,
+    type: String,
+    trim: true,
     maxLength: 50,
   },
   description: {

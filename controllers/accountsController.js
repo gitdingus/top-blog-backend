@@ -390,7 +390,12 @@ exports.api_post_create_blog = [
   isBloggerInGoodStanding,
   express.json(),
   express.urlencoded({ extended: false }),
-  body('name', 'Blog name must be between 1 and 50 characters')
+  body('name')
+    .trim()
+    .isLength({ min: 1, max: 25 }).withMessage('Blog name must be between 1 and 25 characters').bail()
+    .matches(/^[a-zA-Z-_]+$/).withMessage('Blog name must only contain letters, special characters - and _ are also allowed')
+    .escape(),
+  body('title', 'Blog title must be between 1 and 50 characters')
     .trim()
     .isLength({ min: 1, max: 50 })
     .escape(),
@@ -415,10 +420,11 @@ exports.api_post_create_blog = [
     const errors = validationResult(req);
     const blog = new Blog({
       name: req.body.name,
+      title: req.body.title,
       description: req.body.description,
       category: req.body.category,
     });
-
+    
     if (!errors.isEmpty()) {
       res.status(400)
         .json({
