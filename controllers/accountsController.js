@@ -519,9 +519,44 @@ exports.api_get_blogs_list = [
 
 exports.api_get_blogs_posts = [
   isLoggedInUser,
-  asyncHandler(async(req, res, next) => {
-    const posts = await BlogPost.find({ blog: req.params.blogId }).exec();
+  param('blogId')
+  .isMongoId().withMessage('Malformed blog id').bail({ level: 'request' })
+  .custom(async (blogId, { req }) => {
+    const blog = await Blog.findById(blogId).exec();
 
+    if (blog === null) {
+      throw new Error('Blog does not exist');
+    }
+
+    if (blog.owner.toString() !== req.user._id.toString()) {
+      throw new Error('Not users blog');
+    }
+
+    return true;
+  }).bail({ level: 'request' }),
+  asyncHandler(async(req, res, next) => {
+    // check that blog id exists 
+    // check that the owner of the blog is the currently logged in user
+    // get all the posts in the blog where the logged in user is the author.
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      if (errors.array().some((error) => error.msg === 'Not users blog')){
+        return next(createError(403, 'Forbidden'));
+      }
+
+      if (errors.array().some((error) => error.msg === 'Blog does not exist')) {
+        return next(createError(404, 'Blog not found'));
+      }
+
+      
+      res.status(400)
+        .json( { errors: errors.array() });
+      
+      return;
+    }
+
+    const posts = await BlogPost.find({ blog: req.params.blogId, author: req.params.userId }).exec();
     res.status(200)
       .json({ posts });
   }),
@@ -530,7 +565,7 @@ exports.api_get_blogs_posts = [
 exports.api_get_blog_posts = [
   isLoggedInUser,
   asyncHandler(async(req, res, next) => {
-    const posts = await BlogPost.find({ }).exec();
+    const posts = await BlogPost.find({ author: req.params.userId }).exec();
 
     res.status(200)
       .json({ posts });
