@@ -13,6 +13,7 @@ const LocalStrategy = require('passport-local');
 const createError = require('http-errors');
 const morgan = require('morgan');
 const accountsRouter = require('./routes/accounts.js');
+const blogsRouter = require('./routes/blogs.js');
 const User = require('./models/user.js');
 const { validPassword } = require('./utils/passwordUtils.js');
 
@@ -88,7 +89,7 @@ if (process.env.NODE_ENV = 'development') {
 app.use(express.static('/public'));
 
 app.use('/', accountsRouter);
-
+app.use('/', blogsRouter);
 app.use((req, res, next) => {
   //If it reaches this point it's a 404 error
   return next(createError(404, 'File not found'));
