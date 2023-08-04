@@ -158,9 +158,15 @@ exports.api_post_login = [
   express.urlencoded({ extended: false }),
   passport.authenticate('local'),
   (req, res, next) => {
+    const user = req.user;
+
+    // strip sensitive information
+    user.salt = undefined;
+    user.hash = undefined;
+    
     res
       .status(200)
-      .json({ msg: 'Successful' });
+      .json({ msg: 'Successful', user });
   }
 ];
 
