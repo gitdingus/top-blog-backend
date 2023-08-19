@@ -147,9 +147,12 @@ exports.api_post_create_account = [
 
     await newAccount.save();
 
+    // Strip sensitive data before returning
+    newAccount.salt = undefined;
+    newAccount.hash = undefined;
     res
-      .status(201)
-      .json( { msg: 'Account Created' });
+      .status(200)
+      .json( { msg: 'Account Created', user: newAccount });
   }),
 ];
 
