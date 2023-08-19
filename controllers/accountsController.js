@@ -34,6 +34,19 @@ const isBloggerInGoodStanding = asyncHandler(async(req, res, next) => {
   next();
 });
 
+exports.api_get_current_user = (req, res, next) => {
+  if (req.user) {
+    const user = req.user.toObject();
+
+    user.salt = undefined;
+    user.hash = undefined;
+
+    res.status(200).json(user);
+  }
+
+  res.status(404).end();
+}
+
 exports.api_post_create_account = [
   express.json(),
   express.urlencoded({ extended: false }),

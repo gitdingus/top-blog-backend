@@ -3,6 +3,9 @@ const accountsController = require('../controllers/accountsController.js');
 
 const accountsRouter = express.Router();
 
+// Get currently logged in user
+accountsRouter.get('/api/current-user', accountsController.api_get_current_user);
+
 // Account creation and authentication
 accountsRouter.post('/api/create-account', accountsController.api_post_create_account);
 accountsRouter.post('/api/login', accountsController.api_post_login);
