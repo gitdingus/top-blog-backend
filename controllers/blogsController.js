@@ -122,7 +122,7 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
     return next(createError(404, 'Blog not found'));
   }
 
-  const posts = await BlogPost.find({ blog }).exec();
+  const posts = await BlogPost.find({ blog }).sort({ created: 'desc' }).exec();
 
   res.status(200).json({ posts });
   res.status(200).json({ msg: 'GET BLOG POSTS: Not Implemented'});
