@@ -5,6 +5,7 @@ const Blog = require('../models/blog.js');
 const BlogPost = require('../models/blogPost.js');
 const Category = require('../models/category.js');
 const User = require('../models/user.js');
+const mongoose = require('mongoose');
 
 exports.api_get_category_list = asyncHandler (async (req, res, next) => {
   const categoriesQuery = Category.find({});
@@ -125,5 +126,64 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
   const posts = await BlogPost.find({ blog }).sort({ created: 'desc' }).exec();
 
   res.status(200).json({ posts });
-  res.status(200).json({ msg: 'GET BLOG POSTS: Not Implemented'});
+});
+
+exports.api_get_blogs = asyncHandler(async (req, res, next) => {
+  const matchObj = {};
+  let blogsQuery;
+
+  if (req.query) {
+    if (req.query.owner) {
+      const authorId = await User.findOne({ username: req.query.owner }, '_id').exec();
+      matchObj.owner = authorId._id;
+    }
+
+    if (req.query.category) {
+      matchObj.category = new mongoose.Types.ObjectId(req.query.category);
+    }
+
+    if (req.query.preview === 'true') {
+      const aggregate = [
+        {
+          $match: matchObj,
+        },
+        {
+          $set: { 
+            preview: { 
+              $concat: [
+                { $substrBytes: [ '$description', 0, 125 ] },
+                '...',
+              ],
+            }, 
+          },
+        },
+        {
+          $unset: ['__v', 'description'],
+        },
+      ];
+
+      const aggResults = await Blog.aggregate(aggregate);
+
+      await Promise.all([
+        Blog.populate(aggResults, { path: 'owner', select: 'username -_id' }),
+        Blog.populate(aggResults, { path: 'category', select: 'name' }),
+      ]);
+
+      res.status(200).json({ blogs: aggResults });
+      return;
+
+    } else {
+      blogsQuery = Blog
+      .find(matchObj, '-__v')
+      .populate('owner', 'username -_id')
+      .populate('category', 'name');
+  
+      const blogs = await blogsQuery.exec();
+    
+      res.status(200).json({ blogs });
+      return;
+    }
+  }
+
+
 });
