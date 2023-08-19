@@ -14,6 +14,7 @@ blogsRouter.get('/api/blogs/authors/:username', blogsController.api_get_author_d
 // NO TESTS YET
 blogsRouter.get('/api/blogs/', blogsController.api_get_blogs);
 blogsRouter.get('/api/blogs/recent-posts', blogsController.api_get_recent_posts);
+blogsRouter.get('/api/blogs/post/:postId', blogsController.api_get_blogPost);
 
 //Tested, has to show up at bottom
 // Get blog information

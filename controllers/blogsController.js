@@ -211,3 +211,33 @@ exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ recentPosts });
 });
+
+exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
+  const blogPost = 
+    await BlogPost
+      .findById(req.params.postId)
+      .populate('author')
+      .populate({
+        path: 'blog',
+        select: 'category title name -_id',
+        populate: {
+          path: 'category',
+          select: 'name',
+        },
+      })
+      .exec();
+
+  // Remove sensitive information from author
+  blogPost.author._id = undefined;
+  blogPost.author.salt = undefined;
+  blogPost.author.hash = undefined;
+
+  // Remove private information if necessary
+  if (!blogPost.author.public) {
+    blogPost.author.firstName = undefined;
+    blogPost.author.lastName = undefined;
+    blogPost.author.email = undefined;
+  }
+
+  res.status(200).json( { post: blogPost });
+});
