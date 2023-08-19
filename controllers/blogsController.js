@@ -7,7 +7,19 @@ const Category = require('../models/category.js');
 const User = require('../models/user.js');
 
 exports.api_get_category_list = asyncHandler (async (req, res, next) => {
-  const categories = await Category.find({}).exec();
+  const categoriesQuery = Category.find({});
+
+  /* Not Tested */
+  if (req.query.limit) {
+    categoriesQuery.limit(req.query.limit);
+  }
+
+  if (req.query.skip) {
+    categoriesQuery.skip(req.query.skip);
+  }
+  /* End not tested */
+
+  const categories = await categoriesQuery.exec();
 
   console.log(categories);
   res.status(200).json({ categories });
