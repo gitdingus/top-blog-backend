@@ -187,3 +187,27 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
 
 
 });
+
+exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
+  const recentPosts = 
+    await BlogPost
+      .find({})
+      .select(['author', 'title', 'created', 'blog'])
+      .sort({ 'created': 'desc' })
+      .limit(10)
+      .populate({
+        path: 'author',
+        select: 'username -_id',
+      })
+      .populate({
+        path: 'blog',
+        select: 'category name -_id',
+        populate: {
+          path: 'category',
+          select: 'name',
+        },
+      })
+      .exec();
+
+  res.status(200).json({ recentPosts });
+});
