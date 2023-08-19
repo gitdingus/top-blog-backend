@@ -593,6 +593,56 @@ exports.api_get_blog_posts = [
       .json({ posts });
   }),
 ]; 
+
+exports.api_post_edit_blog = [
+  isLoggedInUser,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('title', 'Blog title must be between 1 and 50 characters')
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .escape(),
+  body('description', 'Blog description must be between 1 and 500 characters')
+    .trim()
+    .isLength({ min: 1, max: 500 })
+    .escape(),
+  asyncHandler(async (req, res, next) => {
+    const blog = await Blog.findById(req.params.blogId);
+    const errors = validationResult(req);
+
+    if (blog.owner.toString() !== req.user._id.toString()) {
+      return next(createError(403, 'Forbidden'));
+    }
+
+    if (!errors.isEmpty()) {
+      res
+        .status(400)
+        .json({
+          blog: blog,
+          errors: errors.array(),
+        });
+
+      return;
+    }
+
+    if (req.body.title !== '') {
+      blog.title = req.body.title;
+    }
+
+    if (req.body.description !== '') {
+      blog.description = req.body.description;
+    }
+  
+    const updatedBlog = await blog.save();
+
+    res
+      .status(200)
+      .json({
+        blog: updatedBlog,
+      });
+  }),
+];
+
 exports.api_get_blog_details = [
   isLoggedInUser,
   express.json(),

@@ -32,4 +32,5 @@ accountsRouter.get('/api/users/:userId/blog-posts', accountsController.api_get_b
 // NO TESTS YET
 
 accountsRouter.get('/api/users/:userId/blogs/:blogId/', accountsController.api_get_blog_details);
+accountsRouter.post('/api/users/:userId/blogs/:blogId/edit', accountsController.api_post_edit_blog);
 module.exports = accountsRouter;
