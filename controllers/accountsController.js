@@ -593,3 +593,25 @@ exports.api_get_blog_posts = [
       .json({ posts });
   }),
 ]; 
+exports.api_get_blog_details = [
+  isLoggedInUser,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  asyncHandler(async (req, res, next) => {
+    const blog = await Blog.findById(req.params.blogId);
+
+    if (blog === null) {
+      return next(createError(404, 'Blog not found'));
+    }
+
+    if (blog.owner.toString() !== req.user._id.toString()) {
+      return next(createError(403, 'Forbidden'));
+    }
+
+    res
+      .status(200)
+      .json({
+        blog: blog,
+      });
+  }),
+]

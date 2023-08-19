@@ -29,4 +29,7 @@ accountsRouter.get('/api/users/:userId/blogs', accountsController.api_get_blogs_
 accountsRouter.get('/api/users/:userId/blogs/:blogId/posts', accountsController.api_get_blogs_posts);
 accountsRouter.get('/api/users/:userId/blog-posts', accountsController.api_get_blog_posts);
 
+// NO TESTS YET
+
+accountsRouter.get('/api/users/:userId/blogs/:blogId/', accountsController.api_get_blog_details);
 module.exports = accountsRouter;
