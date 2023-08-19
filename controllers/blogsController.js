@@ -88,13 +88,31 @@ exports.api_get_author_details = asyncHandler ( async (req, res, next) => {
 });
 
 exports.api_get_blog_details = asyncHandler(async (req, res, next) => {
-  const blog = await Blog.find({ name: req.params.blogName }).exec();
+  const blogResults = 
+    await Blog
+      .find({ name: req.params.blogName })
+      .populate('category')
+      .populate('owner')
+      .exec();
 
-  if (!blog.length > 0) {
+  if (!blogResults.length > 0) {
     return next(createError(404, 'Blog not found'));
   }
 
-  res.status(200).json({ blog: blog[0] });
+  const blog = blogResults[0];
+  // Remove sensitive data
+  blog.owner.salt = undefined;
+  blog.owner.hash = undefined;
+  blog.owner._id = undefined;
+
+  // Remove private info if necessary
+  if (blog.owner.public === false) {
+    blog.owner.firstName = undefined;
+    blog.owner.lastName = undefined;
+    blog.owner.email = undefined;
+  }
+
+  res.status(200).json({ blog });
 });
 
 exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
