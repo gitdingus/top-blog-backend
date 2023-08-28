@@ -42,6 +42,7 @@ exports.api_get_current_user = (req, res, next) => {
     user.hash = undefined;
 
     res.status(200).json(user);
+    return;
   }
 
   res.status(404).end();
