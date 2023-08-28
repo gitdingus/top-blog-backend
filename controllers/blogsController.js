@@ -22,7 +22,6 @@ exports.api_get_category_list = asyncHandler (async (req, res, next) => {
 
   const categories = await categoriesQuery.exec();
 
-  console.log(categories);
   res.status(200).json({ categories });
 });
 
