@@ -23,7 +23,7 @@ const blogPostSchema = new Schema({
     required: true,
     type: String,
     trim: true,
-    maxLength: 2000,
+    maxLength: 5000,
   },
   created: {
     required: true,
