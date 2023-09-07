@@ -453,7 +453,7 @@ exports.api_post_create_blog = [
       return true;
     }).withMessage('Category not found'),
   // created gets set before making call to save document
-  asyncHandler(async(req, res, next) => {
+  asyncHandler(async(req, res, next) => { 
     const errors = validationResult(req);
     const blog = new Blog({
       name: req.body.name,
@@ -472,7 +472,11 @@ exports.api_post_create_blog = [
       return;
     }
 
-    blog.owner = req.params.userId,
+    blog.owner = {
+      doc: req.params.userId,
+      status: req.user.status,
+    };
+    
     blog.created = new Date();
 
     const newBlog = await blog.save();
