@@ -171,7 +171,7 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
 });
 
 exports.api_get_blogs = asyncHandler(async (req, res, next) => {
-  const matchObj = {};
+  const matchObj = { private: { $ne: true } };
   let blogsQuery;
 
   if (req.query) {
@@ -207,9 +207,16 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
       const aggResults = await Blog.aggregate(aggregate);
 
       await Promise.all([
-        Blog.populate(aggResults, { path: 'owner', select: 'username -_id' }),
+        Blog.populate(aggResults, { path: 'owner', select: 'username public firstName lastName -_id' }),
         Blog.populate(aggResults, { path: 'category', select: 'name' }),
       ]);
+
+      aggResults.forEach((blog) => {
+        if (!blog.owner.public) {
+          blog.owner.firstName = undefined;
+          blog.owner.lastName = undefined;
+        }
+      });
 
       res.status(200).json({ blogs: aggResults });
       return;
@@ -217,11 +224,18 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
     } else {
       blogsQuery = Blog
       .find(matchObj, '-__v')
-      .populate('owner', 'username -_id')
+      .populate('owner', 'username public firstName lastName -_id')
       .populate('category', 'name');
   
       const blogs = await blogsQuery.exec();
     
+      blogs.forEach((blog) => {
+        if (!blog.owner.public) {
+          blog.owner.firstName = undefined;
+          blog.owner.lastName = undefined;
+        }
+      });
+      
       res.status(200).json({ blogs });
       return;
     }
