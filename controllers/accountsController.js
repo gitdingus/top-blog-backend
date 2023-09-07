@@ -764,8 +764,13 @@ exports.api_post_comment = [
       return;
     }
 
+    const author = await User.findById(req.params.userId).select('status').exec();
+
     const comment = new Comment({
-      author: req.params.userId,
+      author: {
+        doc: req.params.userId,
+        status: author.status,
+      },
       blogPost: req.params.postId,
       content: req.body.content,
     });
