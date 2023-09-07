@@ -846,7 +846,7 @@ exports.api_get_blogpost = [
       return;
     }
 
-    if (post.author.toString() !== req.params.userId) {
+    if (post.author.doc.toString() !== req.params.userId) {
       res.status(403).json({ msg: 'Forbidden' });
       return;
     }
