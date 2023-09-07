@@ -620,13 +620,18 @@ exports.api_post_edit_blog = [
   express.json(),
   express.urlencoded({ extended: false }),
   body('title', 'Blog title must be between 1 and 50 characters')
+    .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
     .escape(),
   body('description', 'Blog description must be between 1 and 500 characters')
+    .optional()
     .trim()
     .isLength({ min: 1, max: 500 })
     .escape(),
+  body('private', 'Private field must be true/false value')
+    .optional()
+    .isBoolean({ strict: true }),
   asyncHandler(async (req, res, next) => {
     const blog = await Blog.findById(req.params.blogId);
     const errors = validationResult(req);
@@ -646,12 +651,16 @@ exports.api_post_edit_blog = [
       return;
     }
 
-    if (req.body.title !== '') {
+    if (req.body.title !== undefined && req.body.title !== '') {
       blog.title = req.body.title;
     }
 
-    if (req.body.description !== '') {
+    if (req.body.description !== undefined && req.body.description !== '') {
       blog.description = req.body.description;
+    }
+
+    if (req.body.private !== undefined) {
+      blog.private = req.body.private;
     }
   
     const updatedBlog = await blog.save();
