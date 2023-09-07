@@ -16,12 +16,6 @@ const commentSchema = new Schema({
     type: Date,
     required: true,
   },
-  title: {
-    type: String,
-    trim: true,
-    maxLength: 50,
-    required: true,
-  },
   content: {
     type: String,
     trim: true,
