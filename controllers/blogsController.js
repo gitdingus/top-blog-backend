@@ -99,6 +99,10 @@ exports.api_get_blog_details = asyncHandler(async (req, res, next) => {
     return next(createError(404, 'Blog not found'));
   }
 
+  if (blogResults[0].private === true) {
+    return next(createError(403, 'Blog has been set to private'));
+  }
+  
   const blog = blogResults[0];
   // Remove sensitive data
   blog.owner.salt = undefined;
