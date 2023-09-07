@@ -282,7 +282,7 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
       .findById(req.params.postId)
       .populate('author.doc')
       .populate({
-        path: 'blog',
+        path: 'blog.doc',
         select: 'category title name -_id',
         populate: {
           path: 'category',
