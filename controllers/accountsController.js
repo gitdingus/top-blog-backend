@@ -813,3 +813,59 @@ exports.api_get_blogpost = [
     res.status(200).json({ post });
   }),
 ];
+
+// gets params userId and blogPostId
+exports.api_post_edit_blogpost = [
+  isLoggedInUser,
+  param('blogPostId')
+    .isMongoId().withMessage('Malformed blog post id').bail({ level: 'request' })
+    .custom(async (blogId, { req }) => {
+      const blogPost = await BlogPost.findById(blogId).exec();
+
+      if (blogPost === null) {
+        throw new Error('Blog post does not exist');
+      }
+
+      if (!blogPost.author.equals(req.user._id)) {
+        throw new Error('Blog does not belong to logged in user');
+      }
+
+      return true;
+    }).bail({ level: 'request' }),
+  express.json(),
+  express.urlencoded({ extended: false }),
+  body('title', 'Title must be between 1 and 50 characters')
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .escape(),
+  body('content', 'Content must be between 1 and 2000 characters')
+    .trim()
+    .isLength({ min: 1, max: 2000 })
+    .escape(),
+  asyncHandler(async (req, res, next) => {
+    console.log('in api_edit_blogpost');
+    const post = await BlogPost.findById(req.params.blogPostId).exec();
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({
+        msg: 'Update failed',
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    if (req.body.title !== undefined) {
+      post.title = req.body.title;
+    }
+
+    if (req.body.content !== undefined) {
+      post.content = req.body.content;
+    }
+
+    await post.save();
+
+    res.status(204).end();
+  }),
+];
