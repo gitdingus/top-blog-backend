@@ -93,7 +93,7 @@ exports.api_get_blog_details = asyncHandler(async (req, res, next) => {
     await Blog
       .find({ name: req.params.blogName })
       .populate('category')
-      .populate('owner')
+      .populate('owner.doc')
       .exec();
 
   if (!blogResults.length > 0) {
@@ -106,15 +106,15 @@ exports.api_get_blog_details = asyncHandler(async (req, res, next) => {
   
   const blog = blogResults[0];
   // Remove sensitive data
-  blog.owner.salt = undefined;
-  blog.owner.hash = undefined;
-  blog.owner._id = undefined;
+  blog.owner.doc.salt = undefined;
+  blog.owner.doc.hash = undefined;
+  blog.owner.doc._id = undefined;
 
   // Remove private info if necessary
-  if (blog.owner.public === false) {
-    blog.owner.firstName = undefined;
-    blog.owner.lastName = undefined;
-    blog.owner.email = undefined;
+  if (blog.owner.doc.public === false) {
+    blog.owner.doc.firstName = undefined;
+    blog.owner.doc.lastName = undefined;
+    blog.owner.doc.email = undefined;
   }
 
   res.status(200).json({ blog });
@@ -178,7 +178,7 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
   if (req.query) {
     if (req.query.owner) {
       const authorId = await User.findOne({ username: req.query.owner }, '_id').exec();
-      matchObj.owner = authorId._id;
+      matchObj.owner.doc = authorId._id;
     }
 
     if (req.query.category) {
@@ -208,14 +208,14 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
       const aggResults = await Blog.aggregate(aggregate);
 
       await Promise.all([
-        Blog.populate(aggResults, { path: 'owner', select: 'username public firstName lastName -_id' }),
+        Blog.populate(aggResults, { path: 'owner.doc', select: 'username public firstName lastName -_id' }),
         Blog.populate(aggResults, { path: 'category', select: 'name' }),
       ]);
 
       aggResults.forEach((blog) => {
-        if (!blog.owner.public) {
-          blog.owner.firstName = undefined;
-          blog.owner.lastName = undefined;
+        if (!blog.owner.doc.public) {
+          blog.owner.doc.firstName = undefined;
+          blog.owner.doc.lastName = undefined;
         }
       });
 
@@ -225,15 +225,15 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
     } else {
       blogsQuery = Blog
       .find(matchObj, '-__v')
-      .populate('owner', 'username public firstName lastName -_id')
+      .populate('owner.doc', 'username public firstName lastName -_id')
       .populate('category', 'name');
   
       const blogs = await blogsQuery.exec();
     
       blogs.forEach((blog) => {
-        if (!blog.owner.public) {
-          blog.owner.firstName = undefined;
-          blog.owner.lastName = undefined;
+        if (!blog.owner.doc.public) {
+          blog.owner.doc.firstName = undefined;
+          blog.owner.doc.lastName = undefined;
         }
       });
       
