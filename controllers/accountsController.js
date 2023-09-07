@@ -800,7 +800,7 @@ exports.api_delete_blog = [
     
     const [ blogToDelete, blogPostsToDelete ]  = await Promise.all([
       Blog.deleteOne({ _id: req.params.blogId }).exec(),
-      BlogPost.deleteMany({ blog: req.params.blogId }).exec(),
+      BlogPost.deleteMany({ 'blog.doc': req.params.blogId }).exec(),
     ]);
 
     console.log(blogToDelete);
