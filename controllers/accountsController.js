@@ -21,6 +21,19 @@ const isLoggedInUser = (req, res, next) => {
   next();
 }
 
+const isUserInGoodStanding = asyncHandler(async(req, res, next) => {
+  if (req.isAuthenticated()) {
+    if (req.user.status !== 'Good') {
+      return next(createError(403, 'Forbidden'));
+    }
+
+  } else {
+    return next(createError(401, 'Unauthorized'));
+  }
+
+  next();
+});
+
 const isBloggerInGoodStanding = asyncHandler(async(req, res, next) => {
   if (req.isAuthenticated()) {
     if (req.user.accountType !== 'Blogger' || req.user.status !== 'Good') {
