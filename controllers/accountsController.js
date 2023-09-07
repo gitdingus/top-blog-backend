@@ -822,7 +822,7 @@ exports.api_delete_blogpost = [
       return;
     }
 
-    if (blogPost.author._id.toString() !== req.params.userId) {
+    if (blogPost.author.doc.toString() !== req.params.userId) {
       res.status(403).json({ msg: 'Forbidden' });
       return;
     }
