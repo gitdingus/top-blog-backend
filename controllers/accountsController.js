@@ -741,3 +741,55 @@ exports.api_post_comment = [
   }),
 ];
 
+// gets params userId and blogId
+exports.api_delete_blog = [
+  isLoggedInUser,
+  asyncHandler(async (req, res, next) => {
+    const blog = await Blog.findById(req.params.id);
+
+    if (blog === null) {
+      res.status(404).json({ msg: 'Blog not found' });
+      return;
+    }
+
+    if (blog.owner.toString() !== req.params.userId) {
+      res.status(403).json({ msg: 'Forbidden' });
+      return;
+    }
+    
+    const [ blogToDelete, blogPostsToDelete ]  = await Promise.all([
+      Blog.deleteOne({ _id: req.params.blogId }).exec(),
+      BlogPost.deleteMany({ blog: req.params.blogId }).exec(),
+    ]);
+
+    console.log(blogToDelete);
+    console.log(blogPostsToDelete);
+
+    res.status(204).end();
+    return;
+  }),
+];
+
+// gets params userId and blogPostId
+exports.api_delete_blogpost = [
+  isLoggedInUser,
+  asyncHandler(async (req, res, next) => {
+    const blogPost = await BlogPost.findById(req.params.blogPostId).exec();
+
+    if (blogPost === null) {
+      res.status(404).json({ msg: 'Blog post not found' });
+      return;
+    }
+
+    if (blogPost.author._id.toString() !== req.params.userId) {
+      res.status(403).json({ msg: 'Forbidden' });
+      return;
+    }
+
+    const deleteBlogPost = BlogPost.deleteOne({ _id: req.params.blogPostId }).exec();
+
+    console.log(deleteBlogPost);
+
+    res.status(204).end();
+  }),
+];
