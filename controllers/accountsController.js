@@ -793,3 +793,23 @@ exports.api_delete_blogpost = [
     res.status(204).end();
   }),
 ];
+
+// gets params userId and blogPostId
+exports.api_get_blogpost = [
+  isLoggedInUser,
+  asyncHandler(async (req, res, next) => {
+    const post = await BlogPost.findById(req.params.blogPostId).exec();
+
+    if (post === null) {
+      res.status(404).json({ msg: 'Blog post not found' });
+      return;
+    }
+
+    if (post.author.toString() !== req.params.userId) {
+      res.status(403).json({ msg: 'Forbidden' });
+      return;
+    }
+
+    res.status(200).json({ post });
+  }),
+];
