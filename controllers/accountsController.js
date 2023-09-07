@@ -477,7 +477,7 @@ exports.api_post_create_blog = [
       doc: req.params.userId,
       status: req.user.status,
     };
-    
+
     blog.created = new Date();
 
     const newBlog = await blog.save();
@@ -721,7 +721,7 @@ exports.api_get_blog_details = [
       return next(createError(404, 'Blog not found'));
     }
 
-    if (blog.owner.toString() !== req.user._id.toString()) {
+    if (blog.owner.doc.toString() !== req.user._id.toString()) {
       return next(createError(403, 'Forbidden'));
     }
 
