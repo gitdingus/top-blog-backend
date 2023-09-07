@@ -251,21 +251,28 @@ exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
       .find({})
       .select(['author', 'title', 'created', 'blog'])
       .sort({ 'created': 'desc' })
-      .limit(10)
       .populate({
         path: 'author',
-        select: 'username -_id',
+        select: 'username public firstName lastName -_id',
       })
       .populate({
         path: 'blog',
-        select: 'category name -_id',
+        select: 'category name private -_id',
         populate: {
           path: 'category',
           select: 'name',
         },
       })
+      .limit(10)
       .exec();
 
+  recentPosts.forEach((post) => {
+    if (!post.author.public) {
+      post.author.firstName = undefined;
+      post.author.lastName = undefined;
+    }
+  });
+  
   res.status(200).json({ recentPosts });
 });
 
