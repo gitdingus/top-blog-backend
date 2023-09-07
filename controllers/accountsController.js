@@ -5,6 +5,7 @@ const asyncHandler = require('express-async-handler');
 const { body, param, validationResult } = require('express-validator');
 const User = require('../models/user.js');
 const Category = require('../models/category.js');
+const Comment = require('../models/comment.js');
 const Blog = require('../models/blog.js');
 const BlogPost = require('../models/blogPost.js');
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
@@ -695,3 +696,48 @@ exports.api_get_blog_details = [
       });
   }),
 ]
+
+// params userId and postId
+exports.api_post_comment = [
+  isLoggedInUser,
+  isUserInGoodStanding,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  param('postId')
+  .isMongoId().withMessage('Malformed blog id').bail({ level: 'request' })
+  .custom(async (blogId, { req }) => {
+    const blogPost = await BlogPost.findById(blogId).exec();
+
+    if (blogPost === null) {
+      throw new Error('Blog Post does not exist');
+    }
+
+    return true;
+  }).bail({ level: 'request' }),
+  body('content', 'Content must be between 1 and 2000 characters')
+  .trim()
+  .isLength({ min: 1, max: 2000 })
+  .escape(),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    const comment = new Comment({
+      author: req.params.userId,
+      blogPost: req.params.postId,
+      content: req.body.content,
+    });
+
+    comment.created = new Date();
+
+    comment.save();
+    res.status(201).end();
+  }),
+];
+

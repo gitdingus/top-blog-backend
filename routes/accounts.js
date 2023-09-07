@@ -33,4 +33,5 @@ accountsRouter.get('/api/users/:userId/blog-posts', accountsController.api_get_b
 
 accountsRouter.get('/api/users/:userId/blogs/:blogId/', accountsController.api_get_blog_details);
 accountsRouter.post('/api/users/:userId/blogs/:blogId/edit', accountsController.api_post_edit_blog);
+accountsRouter.post('/api/users/:userId/blogs/post/:postId/create-comment', accountsController.api_post_comment);
 module.exports = accountsRouter;
