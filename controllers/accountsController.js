@@ -3,6 +3,7 @@ const passport = require('passport');
 const createError = require('http-errors');
 const asyncHandler = require('express-async-handler');
 const { body, param, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const User = require('../models/user.js');
 const Category = require('../models/category.js');
 const Comment = require('../models/comment.js');
@@ -675,7 +676,28 @@ exports.api_post_edit_blog = [
     }
 
     if (req.body.private !== undefined) {
-      blog.private = req.body.private;
+      const s = mongoose.startSession()
+        .withTransaction(async (session) => {
+          const [ b, bposts ] = Promise.all([
+            Blog.findById(req.params.blogId).session(session).exec(),
+            BlogPost.find({ 'blog.doc': req.params.blogId }).session(session).exec(),
+          ]);
+
+          b.private = req.body.private;
+          await Promise.all(
+            bposts.map(async (post) => {
+              post.blog.private = req.body.private;
+              return await post.save({ session });
+            })
+          ).catch((err) => { throw new Error(err.message) });
+
+          await b.save({ session })
+            .catch((err) => { throw new Error(err.message) });
+
+          return Promise.resolve({ msg: 'success' });
+        })
+          .then(() => s.endSession())
+          .catch((err) => console.log(err));
     }
   
     const updatedBlog = await blog.save();
