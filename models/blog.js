@@ -36,6 +36,9 @@ const blogSchema = new Schema({
     required: true,
     type: Date,
   },
+  private: {
+    type: Boolean,
+  },
 });
 
 module.exports = mongoose.model('Blog', blogSchema);

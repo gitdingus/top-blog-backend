@@ -28,6 +28,9 @@ const blogPostSchema = new Schema({
   created: {
     required: true,
     type: Date,
+  },
+  private: {
+    type: Boolean,
   }
 });
 
