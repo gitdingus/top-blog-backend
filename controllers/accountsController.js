@@ -623,7 +623,7 @@ exports.api_get_blogs_posts = [
 exports.api_get_blog_posts = [
   isLoggedInUser,
   asyncHandler(async(req, res, next) => {
-    const posts = await BlogPost.find({ author: req.params.userId }).exec();
+    const posts = await BlogPost.find({ 'author.doc': req.params.userId }).exec();
 
     res.status(200)
       .json({ posts });
