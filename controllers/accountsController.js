@@ -608,7 +608,7 @@ exports.api_get_blogs_posts = [
     }
 
 
-    const postsQuery = BlogPost.find({ blog: req.params.blogId, author: req.params.userId });
+    const postsQuery = BlogPost.find({ 'blog.doc': req.params.blogId, 'author.doc': req.params.userId });
 
     if (req.query.minimal === 'true') {
       postsQuery.select('_id title created');
