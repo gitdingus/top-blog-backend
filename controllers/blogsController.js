@@ -280,7 +280,7 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
   const blogPost = 
     await BlogPost
       .findById(req.params.postId)
-      .populate('author')
+      .populate('author.doc')
       .populate({
         path: 'blog',
         select: 'category title name -_id',
@@ -292,15 +292,15 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
       .exec();
 
   // Remove sensitive information from author
-  blogPost.author._id = undefined;
-  blogPost.author.salt = undefined;
-  blogPost.author.hash = undefined;
+  blogPost.author.doc._id = undefined;
+  blogPost.author.doc.salt = undefined;
+  blogPost.author.doc.hash = undefined;
 
   // Remove private information if necessary
-  if (!blogPost.author.public) {
-    blogPost.author.firstName = undefined;
-    blogPost.author.lastName = undefined;
-    blogPost.author.email = undefined;
+  if (!blogPost.author.doc.public) {
+    blogPost.author.doc.firstName = undefined;
+    blogPost.author.doc.lastName = undefined;
+    blogPost.author.doc.email = undefined;
   }
 
   res.status(200).json( { post: blogPost });
@@ -310,13 +310,13 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
 exports.api_get_blogpost_comments = asyncHandler(async (req, res, next) => {
   const comments = await Comment
     .find({ blogPost: req.params.postId })
-    .populate('author', 'firstName lastName username public -_id')
+    .populate('author.doc', 'firstName lastName username public -_id')
     .exec();
 
   comments.forEach((comment) => {
-    if (!comment.author.public) {
-      comment.author.firstName = undefined;
-      comment.author.lastName = undefined;
+    if (!comment.author.doc.public) {
+      comment.author.doc.firstName = undefined;
+      comment.author.doc.lastName = undefined;
     }
   });
 
