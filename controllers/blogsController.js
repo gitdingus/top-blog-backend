@@ -126,8 +126,47 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
     return next(createError(404, 'Blog not found'));
   }
 
-  const posts = await BlogPost.find({ blog }).sort({ created: 'desc' }).exec();
+  if (blogResults[0].private === true) {
+    return next(createError(403, 'Blog has been set to private'));
+  }
 
+  const aggregate = [
+    { 
+      $match: {
+        blog: blog[0]._id,
+      }, 
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        created: 1,
+        content: 1,
+      }
+    },
+    {
+      $set: {
+        preview: {
+          $concat: [
+            { $substrBytes: [ '$content', 0, 200 ] },
+            '...',
+          ],
+        },
+      },
+    },
+    {
+      $unset: ['__v', 'content'],
+    },
+  ];
+
+  // const posts = await BlogPost
+  //   .find({ blog })
+  //   .select('_id title created')
+  //   .sort({ created: 'desc' })
+  //   .exec();
+
+  const posts = await BlogPost.aggregate(aggregate);
+  
   res.status(200).json({ posts });
 });
 
