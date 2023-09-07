@@ -592,7 +592,14 @@ exports.api_get_blogs_posts = [
       return;
     }
 
-    const posts = await BlogPost.find({ blog: req.params.blogId, author: req.params.userId }).exec();
+
+    const postsQuery = BlogPost.find({ blog: req.params.blogId, author: req.params.userId });
+
+    if (req.query.minimal === 'true') {
+      postsQuery.select('_id title created');
+    }
+
+    const posts = await postsQuery.exec();
     res.status(200)
       .json({ posts });
   }),
