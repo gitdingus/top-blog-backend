@@ -4,14 +4,26 @@ const Schema = mongoose.Schema;
 
 const blogPostSchema = new Schema({
   blog: {
-    required: true,
-    type: Schema.Types.ObjectId,
-    ref: 'Blog',
+    doc: {
+      required: true,
+      type: Schema.Types.ObjectId,
+      ref: 'Blog',
+    },
+    private: { 
+      required: true,
+      type: Boolean,
+    }
   },
   author: {
-    required: true,
-    type: Schema.Types.ObjectId,
-    ref: 'User',
+    doc: {
+      required: true,
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    status: {
+      required: true,
+      type: String,
+    },
   },
   title: {
     required: true,
@@ -31,6 +43,7 @@ const blogPostSchema = new Schema({
   },
   private: {
     type: Boolean,
+    required: true,
   }
 });
 

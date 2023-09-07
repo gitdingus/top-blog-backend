@@ -4,9 +4,15 @@ const Schema = mongoose.Schema;
 
 const blogSchema = new Schema({
   owner: {
-    required: true,
-    type: Schema.Types.ObjectId,
-    ref: 'User',
+    doc: {
+      required: true,
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    status: {
+      required: true,
+      type: String,
+    },
   },
   name: {
     required: true,
@@ -38,6 +44,7 @@ const blogSchema = new Schema({
   },
   private: {
     type: Boolean,
+    required: true,
   },
 });
 
