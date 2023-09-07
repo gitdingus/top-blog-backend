@@ -4,6 +4,7 @@ const { param, validationResult } = require('express-validator');
 const Blog = require('../models/blog.js');
 const BlogPost = require('../models/blogPost.js');
 const Category = require('../models/category.js');
+const Comment = require('../models/comment.js');
 const User = require('../models/user.js');
 const mongoose = require('mongoose');
 
@@ -296,4 +297,24 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
   }
 
   res.status(200).json( { post: blogPost });
+});
+
+// URL Params postId - blogPosts unique Id
+exports.api_get_blogpost_comments = asyncHandler(async (req, res, next) => {
+  const comments = await Comment
+    .find({ blogPost: req.params.postId })
+    .populate('author', 'firstName lastName username public -_id')
+    .exec();
+
+  comments.forEach((comment) => {
+    if (!comment.author.public) {
+      comment.author.firstName = undefined;
+      comment.author.lastName = undefined;
+    }
+  });
+
+  res.status(200).json({
+    msg: 'Success',
+    comments: comments,
+  });
 });
