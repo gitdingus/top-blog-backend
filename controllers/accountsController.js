@@ -561,7 +561,7 @@ exports.api_post_create_blogpost = [
 exports.api_get_blogs_list = [
   isLoggedInUser,
   asyncHandler(async(req, res, next) => {
-    const blogs = await Blog.find({ owner: req.params.userId }).exec();
+    const blogs = await Blog.find({ 'owner.doc': req.params.userId }).exec();
 
     res.status(200)
       .json({ blogs });
