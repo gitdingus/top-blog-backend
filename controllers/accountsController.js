@@ -535,8 +535,18 @@ exports.api_post_create_blogpost = [
       return;
     }
 
-    blogPost.blog = req.params.blogId;
-    blogPost.author = req.params.userId;
+    const blog = await Blog.findById(req.params.blogId).select('private').exec();
+
+    blogPost.blog = {
+      doc: req.params.blogId,
+      private: blog.private,
+    };
+
+    blogPost.author = {
+      doc: req.params.userId,
+      status: req.user.status,
+    };
+
     blogPost.created = new Date();
 
     const newPost = await blogPost.save();
