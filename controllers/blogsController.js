@@ -127,14 +127,14 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
     return next(createError(404, 'Blog not found'));
   }
 
-  if (blogResults[0].private === true) {
+  if (blog[0].private === true) {
     return next(createError(403, 'Blog has been set to private'));
   }
 
   const aggregate = [
     { 
       $match: {
-        blog: blog[0]._id,
+        'blog.doc': blog[0]._id,
       }, 
     },
     {
