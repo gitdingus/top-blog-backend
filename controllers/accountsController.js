@@ -867,7 +867,7 @@ exports.api_post_edit_blogpost = [
         throw new Error('Blog post does not exist');
       }
 
-      if (!blogPost.author.equals(req.user._id)) {
+      if (!blogPost.author.doc.equals(req.user._id)) {
         throw new Error('Blog does not belong to logged in user');
       }
 
