@@ -172,13 +172,16 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
 });
 
 exports.api_get_blogs = asyncHandler(async (req, res, next) => {
-  const matchObj = { private: { $ne: true } };
+  let matchObj = { private: { $ne: true } };
   let blogsQuery;
 
   if (req.query) {
     if (req.query.owner) {
       const authorId = await User.findOne({ username: req.query.owner }, '_id').exec();
-      matchObj.owner.doc = authorId._id;
+      matchObj = { 
+        ...matchObj,
+        'owner.doc' : authorId._id,
+      };
     }
 
     if (req.query.category) {
