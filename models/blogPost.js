@@ -9,10 +9,10 @@ const blogPostSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'Blog',
     },
-    private: { 
+    private: {
       required: true,
       type: Boolean,
-    }
+    },
   },
   author: {
     doc: {
@@ -46,5 +46,7 @@ const blogPostSchema = new Schema({
     required: true,
   }
 });
+
+
 
 module.exports = mongoose.model('BlogPost', blogPostSchema);
