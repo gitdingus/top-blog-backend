@@ -15,7 +15,7 @@ const commentSchema = new Schema({
     },
     status: {
       required: true,
-      type: Boolean,
+      type: String,
     },
   },
   created: {
