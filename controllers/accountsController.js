@@ -478,6 +478,8 @@ exports.api_post_create_blog = [
       status: req.user.status,
     };
 
+    blog.private = false;
+
     blog.created = new Date();
 
     const newBlog = await blog.save();
@@ -503,7 +505,7 @@ exports.api_post_create_blogpost = [
         throw new Error('Blog does not exist');
       }
 
-      if (!blog.owner.equals(req.user._id)) {
+      if (!blog.owner.doc.equals(req.user._id)) {
         throw new Error('Blog does not belong to logged in user');
       }
 
@@ -548,6 +550,7 @@ exports.api_post_create_blogpost = [
       status: req.user.status,
     };
 
+    blogPost.private = false;
     blogPost.created = new Date();
 
     const newPost = await blogPost.save();
@@ -580,7 +583,7 @@ exports.api_get_blogs_posts = [
       throw new Error('Blog does not exist');
     }
 
-    if (blog.owner.toString() !== req.user._id.toString()) {
+    if (blog.owner.doc.toString() !== req.user._id.toString()) {
       throw new Error('Not users blog');
     }
 
@@ -652,7 +655,7 @@ exports.api_post_edit_blog = [
     const blog = await Blog.findById(req.params.blogId);
     const errors = validationResult(req);
 
-    if (blog.owner.toString() !== req.user._id.toString()) {
+    if (blog.owner.doc.toString() !== req.user._id.toString()) {
       return next(createError(403, 'Forbidden'));
     }
 
