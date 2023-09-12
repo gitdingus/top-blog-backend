@@ -615,7 +615,7 @@ exports.api_get_blogs_posts = [
     const postsQuery = BlogPost.find({ 'blog.doc': req.params.blogId, 'author.doc': req.params.userId });
 
     if (req.query.minimal === 'true') {
-      postsQuery.select('_id title created');
+      postsQuery.select('_id title created private');
     }
 
     const posts = await postsQuery.exec();
