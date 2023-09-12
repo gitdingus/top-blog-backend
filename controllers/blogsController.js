@@ -278,7 +278,7 @@ exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
 });
 
 exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
-  const blogPost = 
+  let blogPost = 
     await BlogPost
       .find({
         _id: req.params.postId,
@@ -286,7 +286,10 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
         'author.status': { $ne: 'Banned' },
         private: { $ne: true },
       })
-      .populate('author.doc')
+      .populate({
+        path: 'author.doc',
+        select: '-salt -hash -_id'
+      })
       .populate({
         path: 'blog.doc',
         select: 'category title name -_id',
@@ -297,10 +300,12 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
       })
       .exec();
 
-  // Remove sensitive information from author
-  blogPost.author.doc._id = undefined;
-  blogPost.author.doc.salt = undefined;
-  blogPost.author.doc.hash = undefined;
+  if (blogPost === null) {
+    res.status(404).json({ msg: 'Blog post could not be retrieved' });
+    return;
+  }
+
+  blogPost = blogPost[0];
 
   // Remove private information if necessary
   if (!blogPost.author.doc.public) {
