@@ -166,7 +166,10 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
 });
 
 exports.api_get_blogs = asyncHandler(async (req, res, next) => {
-  let matchObj = { private: { $ne: true } };
+  let matchObj = { 
+    private: { $ne: true },
+    'owner.status' : { $ne: 'Banned' },
+  };
   let blogsQuery;
 
   if (req.query) {
