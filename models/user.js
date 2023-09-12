@@ -36,7 +36,7 @@ const userSchema = new Schema({
   accountType: {
     type: String,
     required: true,
-    enum: [ 'Admin', 'Commenter', 'Blogger' ],
+    enum: [ 'Admin', 'Moderator', 'Commenter', 'Blogger' ],
   },
   public: Boolean,
   salt: {
