@@ -134,6 +134,7 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
     { 
       $match: {
         'blog.doc': blog[0]._id,
+        'private': { $ne: true },
       }, 
     },
     {
@@ -158,12 +159,6 @@ exports.api_get_blog_posts = asyncHandler(async(req, res, next) => {
       $unset: ['__v', 'content'],
     },
   ];
-
-  // const posts = await BlogPost
-  //   .find({ blog })
-  //   .select('_id title created')
-  //   .sort({ created: 'desc' })
-  //   .exec();
 
   const posts = await BlogPost.aggregate(aggregate);
   
@@ -253,6 +248,7 @@ exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
       .find({
         'blog.private' : { $ne: true },
         'author.status' : { $ne: 'Banned' },
+        'private' : { $ne: true },
       })
       .select(['author', 'title', 'created', 'blog'])
       .sort({ 'created': 'desc' })
@@ -284,7 +280,12 @@ exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
 exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
   const blogPost = 
     await BlogPost
-      .findById(req.params.postId)
+      .find({
+        _id: req.params.postId,
+        'blog.private': { $ne: true },
+        'author.status': { $ne: 'Banned' },
+        private: { $ne: true },
+      })
       .populate('author.doc')
       .populate({
         path: 'blog.doc',
@@ -314,7 +315,10 @@ exports.api_get_blogPost = asyncHandler(async (req,res,next) => {
 // URL Params postId - blogPosts unique Id
 exports.api_get_blogpost_comments = asyncHandler(async (req, res, next) => {
   const comments = await Comment
-    .find({ blogPost: req.params.postId })
+    .find({ 
+      blogPost: req.params.postId,
+      'author.status' : { $ne: 'Banned' }
+    })
     .populate('author.doc', 'firstName lastName username public -_id')
     .exec();
 
