@@ -879,13 +879,18 @@ exports.api_post_edit_blogpost = [
   express.json(),
   express.urlencoded({ extended: false }),
   body('title', 'Title must be between 1 and 50 characters')
+    .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
     .escape(),
   body('content', 'Content must be between 1 and 2000 characters')
+    .optional()
     .trim()
     .isLength({ min: 1, max: 2000 })
     .escape(),
+  body('private', "Private must be set with a boolean value")
+    .optional()
+    .isBoolean({ strict: true }),
   asyncHandler(async (req, res, next) => {
     console.log('in api_edit_blogpost');
     const post = await BlogPost.findById(req.params.blogPostId).exec();
@@ -906,6 +911,10 @@ exports.api_post_edit_blogpost = [
 
     if (req.body.content !== undefined) {
       post.content = req.body.content;
+    }
+
+    if (req.body.private !== undefined) {
+      post.private = req.body.private;
     }
 
     await post.save();
