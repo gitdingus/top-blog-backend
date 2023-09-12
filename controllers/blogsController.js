@@ -74,7 +74,6 @@ exports.api_get_authors_list = asyncHandler (async (req, res, next) => {
 exports.api_get_author_details = asyncHandler ( async (req, res, next) => {
   const author = await User.find( { username: req.params.username, accountType: 'Blogger' }, { __v: 0, _id: 0, salt: 0, hash: 0 }).exec();
 
-  console.log(author);
   if (!author.length > 0) {
     return next(createError(404, 'Author does not exist or does not belong to a blogger'));
   }
@@ -251,7 +250,10 @@ exports.api_get_blogs = asyncHandler(async (req, res, next) => {
 exports.api_get_recent_posts = asyncHandler(async (req, res, next) => {
   const recentPosts = 
     await BlogPost
-      .find({})
+      .find({
+        'blog.private' : { $ne: true },
+        'author.status' : { $ne: 'Banned' },
+      })
       .select(['author', 'title', 'created', 'blog'])
       .sort({ 'created': 'desc' })
       .populate({
