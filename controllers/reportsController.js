@@ -38,7 +38,8 @@ exports.api_post_reports = [
   body('reportingUser', 'Must provide id of reporting user')
     .isMongoId(),
   body('reason', 'Must include a reason')
-    .isLength({ min: 1, max: 200 }),
+    .isLength({ min: 1, max: 200 })
+    .escape(),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
