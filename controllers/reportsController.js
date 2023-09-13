@@ -35,8 +35,6 @@ exports.api_post_reports = [
   }),
   body('contentId', 'Must provide content id')
     .isMongoId(),
-  body('reportingUser', 'Must provide id of reporting user')
-    .isMongoId(),
   body('reason', 'Must include a reason')
     .isLength({ min: 1, max: 200 })
     .escape(),
@@ -54,6 +52,7 @@ exports.api_post_reports = [
       contentType: req.body.contentType,
       contentId: req.body.contentId,
       reportingUser: req.body.reportingUser,
+      reportedUser: req.body.reportedUser,
       reason: req.body.reason,
       reportCreated: new Date(),
     });
@@ -83,6 +82,10 @@ exports.api_get_reports = [
       return req.query.contentType !== undefined;
     })
     .withMessage('Must specify contentType if using contentId'),
+  query('reportedUser')
+    .optional(),
+  query('reportingUser')
+    .optional(),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
@@ -103,6 +106,14 @@ exports.api_get_reports = [
 
     if (req.query.contentId !== undefined) {
       matchObj.contentId = req.query.contentId;
+    }
+
+    if (req.query.reportedUser !== undefined) {
+      matchObj.reportedUser = req.query.reportedUser;
+    }
+
+    if (req.query.reportingUser !== undefined) {
+      matchObj.reportingUser = req.query.reportingUser;
     }
 
     const reports = await Report.find( matchObj ).exec();

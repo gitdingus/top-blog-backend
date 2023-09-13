@@ -13,8 +13,11 @@ const reportSchema = new Schema({
     required: true,
   },
   reportingUser: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
+    required: true,
+  },
+  reportedUser: {
+    type: String,
     required: true,
   },
   reportCreated: {
