@@ -70,9 +70,8 @@ exports.api_get_reports = [
   query('contentType', 'Content type must be "comment" or "blogpost"')
     .optional()
     .custom((val) => {
-      const contentTypes = ['comment', 'blogpost'];
-
-      return contentTypes.includes(val.toLower());
+      const contentTypes = ['Comment', 'BlogPost'];
+      return contentTypes.includes(val);
     }),
   query('contentId')
     .optional()
