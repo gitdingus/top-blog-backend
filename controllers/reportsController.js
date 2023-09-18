@@ -38,6 +38,14 @@ exports.api_post_reports = [
   body('reason', 'Must include a reason')
     .isLength({ min: 1, max: 200 })
     .escape(),
+  body('reportingUser')
+    .custom(async (val, { req }) => {
+      const report = await Report.find({ contentId: req.body.contentId, reportingUser: req.body.reportingUser }).exec();
+
+      if (report.length > 0) {
+        throw new Error('We have already received your report');
+      }
+    }),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
