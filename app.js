@@ -14,6 +14,7 @@ const createError = require('http-errors');
 const morgan = require('morgan');
 const accountsRouter = require('./routes/accounts.js');
 const blogsRouter = require('./routes/blogs.js');
+const moderationRouter = require('./routes/moderation.js');
 const reportsRouter = require('./routes/reports.js');
 const User = require('./models/user.js');
 const { validPassword } = require('./utils/passwordUtils.js');
@@ -70,7 +71,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 5, // 5 Minutes
+    maxAge: 1000 * 60 * 60, // 60 Minutes
   },
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_CONNECTION_STRING,
@@ -91,6 +92,7 @@ app.use(express.static('/public'));
 
 app.use('/', accountsRouter);
 app.use('/', blogsRouter);
+app.use('/api/moderation', moderationRouter);
 app.use('/api/reports', reportsRouter);
 
 app.use((req, res, next) => {
