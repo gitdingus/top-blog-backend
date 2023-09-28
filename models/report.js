@@ -31,8 +31,7 @@ const reportSchema = new Schema({
     required: true,
   },
   respondingModerator: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
   },
   actionTaken: {
     type: String,
