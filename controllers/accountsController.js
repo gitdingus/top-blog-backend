@@ -680,27 +680,26 @@ exports.api_post_edit_blog = [
 
     if (req.body.private !== undefined) {
       const s = await mongoose.startSession();
-      s.withTransaction(async (session) => {
+      s.withTransaction(async () => {
         const [ b, bposts ] = await Promise.all([
-          Blog.findById(req.params.blogId).session(session).exec(),
-          BlogPost.find({ 'blog.doc': req.params.blogId }).session(session).exec(),
+          Blog.findById(req.params.blogId).session(s).exec(),
+          BlogPost.find({ 'blog.doc': req.params.blogId }).session(s).exec(),
         ]);
 
-        const promises = await Promise.all(
-          bposts.map(async (post) => {
-            post.blog.private = req.body.private;
-            return post.save({session});;
-          })
-        ).catch((err) => { throw new Error(err.message) });
-
         b.private = req.body.private;
-        await b.save({session})
-          .catch((err) => { throw new Error(err.message) });
+        const promises = Promise.all([
+          ...bposts.map(async (post) => {
+            post.blog.private = req.body.private;
+            return post.save({session: s});;
+          }),
+          b.save({session: s}), 
+        ]);
 
-        return Promise.resolve({ msg: 'success' });
+        return promises;
       })
-        .then(() => s.endSession())
-        .catch((err) => {console.log('Transaction failed'); console.log(err);});
+        .then(() => s.commitTransaction())
+        .then(() => s.endSession()) 
+        .catch((err) => {console.log('Transaction failed');});
     }
   
     const updatedBlog = await blog.save();
