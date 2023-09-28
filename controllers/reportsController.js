@@ -128,3 +128,16 @@ exports.api_get_reports = [
     res.status(200).json(reports);
   }),
 ];
+
+exports.api_get_report = [
+  isAdminOrModerator,
+  asyncHandler(async (req, res, next) => {
+    const report = await Report.findById(req.params.reportId);
+
+    if (report === null) {
+      res.status(404).json({ msg: 'Report not found' });
+    }
+
+    res.status(200).json({ report });
+  }),
+]
