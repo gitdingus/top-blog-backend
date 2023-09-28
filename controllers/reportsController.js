@@ -25,6 +25,21 @@ const isAdminOrModerator = (req, res, next) => {
 
   next();
 }
+
+const convertFieldsToArray = (req, res, next) => {
+  const fields = ['contentType', 'settled', 'actionTaken'];
+
+  fields.forEach((field) => {
+    if (req.query[field] === undefined) {
+      return;
+    }
+    else if (!Array.isArray(req.query[field])) {
+      req.query[field] = [ req.query[field] ];
+    }
+  });
+
+  next();
+} 
 exports.api_post_reports = [
   isLoggedIn,
   express.json(),
@@ -72,23 +87,11 @@ exports.api_post_reports = [
 
 exports.api_get_reports = [
   isAdminOrModerator,
+  convertFieldsToArray,
   query('settled', 'Settled must be boolean value')
-    .optional()
-    .isBoolean({ strict: true }),
-  query('contentType', 'Content type must be "comment" or "blogpost"')
-    .optional()
-    .custom((val) => {
-      const contentTypes = ['Comment', 'BlogPost'];
-      return contentTypes.includes(val);
-    }),
-  query('contentId')
-    .optional()
-    .isMongoId()
-    .withMessage('contentId must be valid mongoId')
-    .custom((val, { req }) => {
-      return req.query.contentType !== undefined;
-    })
-    .withMessage('Must specify contentType if using contentId'),
+    .optional(),
+  query('contentType', 'Content type must be "Comment" or "BlogPost"')
+    .optional(),
   query('reportedUser')
     .optional(),
   query('reportingUser')
@@ -102,17 +105,29 @@ exports.api_get_reports = [
     }
 
     const matchObj = {};
-
+    console.log(req.query);
+    
+    if (req.query.skip === undefined) {
+      
+    }
     if (req.query.settled !== undefined) {
-      matchObj.settled = req.query.settled;
+      let settledArray = [];
+      if (req.query.settled.includes('true')) {
+        settledArray.push({ settled: true });
+      }
+      if (req.query.settled.includes('false')) {
+        settledArray.push({ settled: { $ne: true }});
+        settledArray.push({ settled: false });
+      }
+      matchObj.$or = settledArray;
     }
 
     if (req.query.contentType !== undefined) {
-      matchObj.contentType = req.query.contentType;
+      matchObj.contentType = { $in: req.query.contentType };
     }
 
-    if (req.query.contentId !== undefined) {
-      matchObj.contentId = req.query.contentId;
+    if (req.query.actionTaken !== undefined) {
+      matchObj.actionTaken = { $in: req.query.actionTaken };
     }
 
     if (req.query.reportedUser !== undefined) {
@@ -123,8 +138,51 @@ exports.api_get_reports = [
       matchObj.reportingUser = req.query.reportingUser;
     }
 
-    const reports = await Report.find( matchObj ).exec();
+    if (req.query.respondingModerator !== undefined) {
+      matchObj.respondingModerator = req.query.respondingModerator;
+    }
 
+    if (req.query.reportedAfter !== undefined) {
+      if (matchObj.reportCreated === undefined) {
+        matchObj.reportCreated = {};
+      }
+      matchObj.reportCreated.$gte = new Date(req.query.reportedAfter);
+    }
+
+    if (req.query.reportedBefore !== undefined) {
+      if (matchObj.reportCreated === undefined) {
+        matchObj.reportCreated = {};
+      }
+      matchObj.reportCreated.$lte = new Date(req.query.reportedBefore);
+    }
+
+    if (req.query.respondedAfter !== undefined) {
+      if (matchObj.dateOfAction === undefined) {
+        matchObj.dateOfAction = {};
+      }
+      matchObj.dateOfAction.$gte = new Date(req.query.respondedAfter);
+    }
+
+    if (req.query.respondedBefore !== undefined) {
+      if (matchObj.dateOfAction === undefined) {
+        matchObj.dateOfAction = {};
+      }
+      matchObj.dateOfAction.$lte = new Date(req.query.respondedBefore);
+    }
+
+    const LIMIT = 20;
+    let skip = 0;
+    
+    if (req.query.page !== undefined) {
+      skip = Number.parseInt(req.query.page) * LIMIT;
+    }
+
+    const reports = await Report
+    .find(matchObj)
+    .skip(skip)
+    .limit(LIMIT)
+    .exec();
+    
     res.status(200).json(reports);
   }),
 ];
