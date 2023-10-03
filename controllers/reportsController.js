@@ -89,27 +89,51 @@ exports.api_get_reports = [
   isAdminOrModerator,
   convertFieldsToArray,
   query('settled', 'Settled must be boolean value')
-    .optional(),
+    .optional()
+    .custom((arr) => {
+      return arr.every((item) => item === 'true' || item === 'false');
+    }),
   query('contentType', 'Content type must be "Comment" or "BlogPost"')
-    .optional(),
+    .optional()
+    .custom((arr) => {
+      return arr.every((item) => item === 'Comment' || item === 'BlogPost');
+    }),
+  query('actionTaken', 'Action taken must be "Banned", "Restricted", or "Delete"')
+    .optional()
+    .custom((arr) => {
+      return arr.every((item) => item === 'Banned' || item === 'Restricted' || item === 'Delete');
+    }),
   query('reportedUser')
     .optional(),
   query('reportingUser')
     .optional(),
+  query('respondingModerator')
+    .optional(),
+  query('reportedAfter', 'Reported after must be a date')
+    .optional()
+    .isDate(),
+  query('reportedBefore', 'Reported before must be a date')
+    .optional()
+    .isDate(),
+  query('respondedAfter', 'Responded after must be a date')
+    .optional()
+    .isDate(),
+  query('respondedBefore', 'Responded before must be a date')
+    .optional()
+    .isDate(),
+  query('page', 'Page must be an integer')
+    .optional()
+    .isInt(),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-
+    
     if(!errors.isEmpty()) {
       res.status(400).json({ errors: errors.array() });
       return;
     }
 
     const matchObj = {};
-    console.log(req.query);
     
-    if (req.query.skip === undefined) {
-      
-    }
     if (req.query.settled !== undefined) {
       let settledArray = [];
       if (req.query.settled.includes('true')) {
@@ -133,43 +157,43 @@ exports.api_get_reports = [
     if (req.query.reportedUser !== undefined) {
       matchObj.reportedUser = req.query.reportedUser;
     }
-
+    
     if (req.query.reportingUser !== undefined) {
       matchObj.reportingUser = req.query.reportingUser;
     }
-
+    
     if (req.query.respondingModerator !== undefined) {
       matchObj.respondingModerator = req.query.respondingModerator;
     }
-
+    
     if (req.query.reportedAfter !== undefined) {
       if (matchObj.reportCreated === undefined) {
         matchObj.reportCreated = {};
       }
       matchObj.reportCreated.$gte = new Date(req.query.reportedAfter);
     }
-
+    
     if (req.query.reportedBefore !== undefined) {
       if (matchObj.reportCreated === undefined) {
         matchObj.reportCreated = {};
       }
       matchObj.reportCreated.$lte = new Date(req.query.reportedBefore);
     }
-
+    
     if (req.query.respondedAfter !== undefined) {
       if (matchObj.dateOfAction === undefined) {
         matchObj.dateOfAction = {};
       }
       matchObj.dateOfAction.$gte = new Date(req.query.respondedAfter);
     }
-
+    
     if (req.query.respondedBefore !== undefined) {
       if (matchObj.dateOfAction === undefined) {
         matchObj.dateOfAction = {};
       }
       matchObj.dateOfAction.$lte = new Date(req.query.respondedBefore);
     }
-
+    
     const LIMIT = 20;
     let skip = 0;
     
