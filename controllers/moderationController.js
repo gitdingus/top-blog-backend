@@ -53,6 +53,100 @@ exports.get_content = [
   }),
 ];
 
+exports.api_get_users = [
+  isAdminOrModerator,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  query('page', 'Page must be an integer value')
+    .optional()
+    .isInt({ min: 0 }),
+  query('username')
+    .optional(),
+  query('first_name')
+    .optional(),
+  query('last_name')
+    .optional(),
+  query('email', 'Email address is invalid')
+    .optional()
+    .isEmail(),
+  query('status')
+    .optional(),
+  query('account_type')
+    .optional(),
+  query('created_after')
+    .optional()
+    .isDate(),
+  query('created_before')
+    .optional()
+    .isDate(),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+    }
+
+    const matchObj = {};
+    const LIMIT = 20;
+    let skip = 0;
+
+    if (req.query.page !== undefined) {
+      skip = Number.parseInt(req.query.page) * LIMIT;
+    }
+
+    if (req.query.username !== undefined) {
+      matchObj.username = req.query.username;
+    }
+
+    if (req.query.first_name !== undefined) {
+      matchObj.firstName = req.query.first_name;
+    }
+
+    if (req.query.last_name !== undefined) {
+      matchObj.lastName = req.query.last_name;
+    }
+
+    if (req.query.email !== undefined) {
+      matchObj.email = req.query.email;
+    }
+
+    if (req.query.status !== undefined) {
+      matchObj.status = req.query.status;
+    }
+
+    if (req.query.account_type !== undefined) {
+      matchObj.accountType = req.query.account_type;
+    }
+
+    if (req.query.created_after !== undefined) {
+      matchObj.created.$gte = new Date(req.query.created_after);
+    }
+
+    if (req.query.created_before !== undefined) {
+      matchObj.created.$lte = new Date(req.query.created_before);
+    }
+
+    const users = await User
+      .find(matchObj)
+      .skip(skip)
+      .limit(LIMIT)
+      .exec();
+
+    users.forEach((user) => {
+      user.salt = undefined;
+      user.hash = undefined;
+
+      if (req.user.accountType !== 'Admin' && user.public !== true) {
+        user.firstName = undefined;
+        user.lastName = undefined;
+        user.email = undefined;
+      }
+    })
+
+    res.status(200).json( users );
+  }),
+];
+
 exports.api_post_moderate_content = [
   isAdminOrModerator,
   express.json(),
@@ -156,7 +250,7 @@ exports.api_post_moderate_content = [
 
         report.settled = true;
         report.dateOfAction = new Date();
-        report.respondingModerator = req.user._id;
+        report.respondingModerator = req.user.username;
         report.actionTaken = 'Delete Content';
 
         console.log(report.modifiedPaths());
@@ -180,5 +274,124 @@ exports.api_post_moderate_content = [
         });
       return;
     } 
+  }),
+];
+
+// gets param userId
+exports.api_post_moderate_user = [
+  isAdminOrModerator,
+  query('account_status', 'Unrecognizable account status')
+    .optional()
+    .custom((val, { req }) => {
+      const acceptedAccountStatuses = ['Banned', 'Good', 'Restricted'];
+
+      if (!acceptedAccountStatuses.includes(req.query.account_status)) {
+        return false;
+      }
+
+      return true;
+    }),
+  query('account_type', 'Unrecognizable account type')
+    .optional()
+    .custom((val, { req }) => {
+      const acceptedAccountTypes = ['Admin', 'Blogger', 'Commenter', 'Moderator'];
+
+      if (!acceptedAccountTypes.includes(req.query.account_type)) {
+        return false;
+      }
+
+      return true;
+    }),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    if(req.query.delete_user === 'true') {
+      // Only admins can delete accounts
+      if (!req.user.accountType === 'Admin') {
+        return res.status(403).json({ msg: 'Forbidden' });
+      }
+
+      const session = await mongoose.startSession();
+      await session.withTransaction(async () => {
+        return Promise.all([
+          Comment.deleteMany({ 'author.doc': req.params.userId }).session(session).exec(),
+          BlogPost.deleteMany({ 'author.doc': req.params.userId }).session(session).exec(),
+          Blog.deleteMany({ 'owner.doc': req.params.userId }).session(session).exec(),
+          User.deleteOne({ _id: req.params.userId }).session(session).exec(),
+        ]);
+      })
+        .then(() => session.commitTransaction())
+        .then(() => session.endSession())
+        .then(() => res.status(204).end())
+        .catch((err) => next(err));
+
+      return;
+    }
+
+    if (req.query.account_status !== undefined) {
+      const session = await mongoose.startSession();
+      const { userId } = req.params;
+      const status = req.query.account_status;
+      // when updating status, must change for 
+      // user, blog.owner.status, blogpost.author.status, comment.author.status
+      session.withTransaction(async () => {
+        const [ user, blogs, blogposts, comments ] = await Promise.all([
+          User.findById(userId).session(session).exec(),
+          Blog.find({ 'owner.doc': userId }).session(session).exec(),
+          BlogPost.find({ 'author.doc': userId }).session(session).exec(),
+          Comment.find({ 'author.doc': userId }).session(session).exec(),
+        ]);
+
+        user.status = status;
+
+        const blogsPromise = blogs.map((blog) => {
+          blog.owner.status = status;
+          return blog.save({ session });
+        });
+
+        const blogPostsPromise = blogposts.map((post) => {
+          post.author.status = status;
+          return post.save({ session });
+        });
+
+        const commentsPromise = comments.map((comment) => {
+          comment.author.status = status;
+          return comment.save({ session });
+        })
+
+        return Promise.all([
+          user.save({ session }),
+          ...blogsPromise,
+          ...blogPostsPromise,
+          ...commentsPromise,
+        ]);
+      })
+        .then(() => session.commitTransaction())
+        .then(() => session.endSession())
+        .then(() => res.status(204).end())
+        .catch((err) => next(err));
+
+      return;
+    }
+
+    if (req.query.account_type !== undefined) {
+      // only admin can change account type
+      if (req.user.accountType !== 'Admin') {
+        return res.status(403).json({ msg: 'Forbidden' });
+      }
+
+      // for now just update account type without worrying about what it 
+      // means to change in behavior
+
+      const user = await User.findById(req.params.userId).exec();
+      user.accountType = req.query.account_type;
+
+      await user.save();
+      return res.status(204).end();
+    }
   }),
 ];
