@@ -53,6 +53,9 @@ const userSchema = new Schema({
     type: Date,
     required: true,
   },
+  image: {
+    type: String,
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);
