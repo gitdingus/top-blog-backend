@@ -1,15 +1,30 @@
 const express = require('express');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getStorage, getDownloadURL } = require('firebase-admin/storage');
 const passport = require('passport');
 const createError = require('http-errors');
 const asyncHandler = require('express-async-handler');
 const { body, param, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
+const multer = require('multer');
 const User = require('../models/user.js');
 const Category = require('../models/category.js');
 const Comment = require('../models/comment.js');
 const Blog = require('../models/blog.js');
 const BlogPost = require('../models/blogPost.js');
 const { generateSaltHash, validPassword, passwordConfig } = require('../utils/passwordUtils.js');
+
+// setup memorystorage for multer
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// setup firebase-admin/storage
+const serviceAccount = require('../../image-store-e09d9-firebase-adminsdk-r3avv-65cab44ecc.json');
+const fsApp = initializeApp({
+  credential: cert(serviceAccount),
+  storageBucket: 'image-store-e09d9.appspot.com',
+});
+const fsBucket = getStorage(fsApp).bucket();
 
 const isLoggedInUser = (req, res, next) => {
   if (req.isAuthenticated()) {
@@ -917,6 +932,57 @@ exports.api_post_edit_blogpost = [
     }
 
     await post.save();
+
+    res.status(204).end();
+  }),
+];
+
+exports.api_post_upload_photo = [
+  isLoggedInUser,
+  upload.single('photo'),
+  asyncHandler(async (req, res, next) => {
+    console.log('in api_post_upload_photo');
+    const user = await User.findById(req.params.userId).exec();
+    const cloudURL = (user.image) ? new URL(user.image) : null;
+    const cloudFilename = (url) => {
+      if (url === null) {
+        return '';
+      }
+
+      path = decodeURIComponent(url.pathname)
+      const index = path.indexOf('/top-blog');
+      const filename = path.slice(index);
+      return filename;
+    };
+    
+    if (req.body.delete_pic === 'on') {
+      if (!user.image) {
+        return res.status(204).end();
+      }
+
+      const fileRef = fsBucket.file(cloudFilename(cloudURL));
+      await fileRef.delete();
+
+      user.image = undefined;
+      await user.save();
+
+      return res.status(204).end();
+    }
+
+    if (req.file) {
+      const originalFilename = req.file.originalname;
+      const destFileName = `/top-blog/${req.user.username}-profile-pic${originalFilename.substring(originalFilename.lastIndexOf('.'))}`;
+      const fileRef = fsBucket.file(destFileName)
+      await fileRef.save(req.file.buffer);
+      await fileRef.makePublic();
+      const url = await getDownloadURL(fileRef);
+  
+      user.image = url;
+  
+      await user.save();
+
+      res.status(204).end();
+    }
 
     res.status(204).end();
   }),
