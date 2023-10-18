@@ -20,7 +20,8 @@ accountsRouter.post('/api/users/:userId/change-password', accountsController.api
 accountsRouter.post('/api/users/:userId/update-settings', accountsController.api_post_update_settings);
 
 // NO TESTS
-accountsRouter.post('/api/users/:userId/upload-photo', accountsController.api_post_upload_photo);
+accountsRouter.post('/api/users/:userId/profile-pic', accountsController.api_post_upload_photo);
+accountsRouter.delete('/api/users/:userId/profile-pic', accountsController.api_delete_profile_photo);
 
 // Creating blogs and blog posts
 accountsRouter.post('/api/users/:userId/blogs/create-blog', accountsController.api_post_create_blog);

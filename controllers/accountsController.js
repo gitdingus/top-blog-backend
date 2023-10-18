@@ -941,35 +941,17 @@ exports.api_post_upload_photo = [
   isLoggedInUser,
   upload.single('photo'),
   asyncHandler(async (req, res, next) => {
-    console.log('in api_post_upload_photo');
-    const user = await User.findById(req.params.userId).exec();
-    const cloudURL = (user.image) ? new URL(user.image) : null;
-    const cloudFilename = (url) => {
-      if (url === null) {
-        return '';
-      }
-
-      path = decodeURIComponent(url.pathname)
-      const index = path.indexOf('/top-blog');
-      const filename = path.slice(index);
-      return filename;
-    };
-    
-    if (req.body.delete_pic === 'on') {
-      if (!user.image) {
-        return res.status(204).end();
-      }
-
-      const fileRef = fsBucket.file(cloudFilename(cloudURL));
-      await fileRef.delete();
-
-      user.image = undefined;
-      await user.save();
-
-      return res.status(204).end();
-    }
+    const user = await User.findById(req.params.userId, { salt: 0, hash: 0 }).exec();
 
     if (req.file) {
+      // clean up old profile photo if exists... 
+      // since extension may be different new photo won't always overwrite
+      if (user.image) {
+        const oldPhotoFilename = profilePhotoCloudFilename(user.image);
+        const oldPhotoRef = fsBucket.file(oldPhotoFilename);
+        await oldPhotoRef.delete();
+      }
+
       const originalFilename = req.file.originalname;
       const destFileName = `/top-blog/${req.user.username}-profile-pic${originalFilename.substring(originalFilename.lastIndexOf('.'))}`;
       const fileRef = fsBucket.file(destFileName)
@@ -980,10 +962,45 @@ exports.api_post_upload_photo = [
       user.image = url;
   
       await user.save();
-
-      res.status(204).end();
     }
 
-    res.status(204).end();
+    res.status(200).json({ currentUser: user }).end();
   }),
 ];
+
+exports.api_delete_profile_photo = [
+  isLoggedInUser,
+  express.json(),
+  express.urlencoded({ extended: false }),
+  asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.params.userId, { salt: 0, hash: 0 }).exec();
+    const cloudFilename = (user.image) ? profilePhotoCloudFilename(user.image) : null;
+
+    if (req.body.delete_pic === true) {
+      if (!user.image) {
+        return res.status(200).json({ currentUser: user }).end();
+      }
+
+      const fileRef = fsBucket.file(cloudFilename);
+      await fileRef.delete();
+
+      user.image = undefined;
+      await user.save();
+    }
+
+    return res.status(200).json({ currentUser: user }).end();
+  }),
+];
+
+function profilePhotoCloudFilename(imageUrl) {
+  if (!imageUrl) {
+    return null;
+  }
+
+  const cloudUrl = new URL(imageUrl);
+  const path = decodeURIComponent(cloudUrl.pathname);
+  const indexOfFilename = path.indexOf('/top-blog');
+  const filename = path.slice(indexOfFilename);
+
+  return filename;
+}
