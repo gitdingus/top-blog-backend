@@ -19,7 +19,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // setup firebase-admin/storage
-const serviceAccount = require('../../image-store-e09d9-firebase-adminsdk-r3avv-65cab44ecc.json');
+const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT);
 const fsApp = initializeApp({
   credential: cert(serviceAccount),
   storageBucket: 'image-store-e09d9.appspot.com',
