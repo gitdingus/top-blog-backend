@@ -64,6 +64,12 @@ passport.deserializeUser(
   }
 )
 
+if (process.env.NODE_ENV = 'development') {
+  app.use(morgan('dev'));
+} else if (process.env.NODE_ENV = 'production') {
+  app.use(morgan('common'));
+}
+
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 
 app.use(session({
@@ -81,12 +87,6 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-if (process.env.NODE_ENV = 'development') {
-  app.use(morgan('dev'));
-} else if (process.env.NODE_ENV = 'production') {
-  app.use(morgan('common'));
-}
 
 app.use(express.static('/public'));
 
